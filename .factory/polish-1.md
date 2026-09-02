@@ -24,11 +24,12 @@
 
 ## Release evidence
 
-- Local full suite: 5 unit tests and 22 Chromium tests passed.
-- Claim manifest: 19 unique claims and exactly one matching `@claim:<id>` test each.
+- Clean-clone full suite: 5 unit tests and 22 Chromium tests passed.
+- Claim manifest: all 19 exact commands passed from `/tmp/rcm-clean-HdOn9m`; every id has exactly one matching `@claim:<id>` test.
 - Production build: 36.82 KB JavaScript and 17.13 KB CSS raw; 12.91 KB and 4.75 KB gzip.
 - Live two-browser run: room creation through shared reveal, zero console errors; `.factory/qa-evidence/polish-1-live-flow.json`.
 - Live accessibility: zero serious or critical Axe findings on six routes at desktop and mobile; `.factory/qa-evidence/polish-1-live-a11y.json`.
-- Lighthouse: performance 100, accessibility 100, best practices 100, SEO 100; LCP 1.7 s, CLS 0; `.factory/qa-evidence/polish-1-lighthouse.json`.
+- Lighthouse: performance 99, accessibility 100, best practices 100, SEO 100; LCP 2.0 s, CLS 0; `.factory/qa-evidence/polish-1-lighthouse.json`.
+- Live offline reload: HTTP 200 with the demo banner, round one, and offline notice; `.factory/qa-evidence/polish-1-live-offline.json`.
 - URL verifier: HTTP 200, title, `lang`, one h1, main landmark, alt text, labelled buttons, and zero console errors; `.factory/qa-evidence/polish-1-verify/verify.json`.
 - Live URLs: `https://room-code-mystery.sociobot.in/`, `/demo`, `/setup`, `/play`, `/privacy`, `/terms`, `/missing-page`, and `https://room-code-mystery-realtime.sociobot.in/health`.

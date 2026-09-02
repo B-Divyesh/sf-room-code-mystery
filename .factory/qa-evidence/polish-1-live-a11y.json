@@ -6,11 +6,8 @@
     },
     "path": "/",
     "status": 200,
-    "title": "Room Code Mystery — Play a three-round mystery",
-    "h1": 1,
-    "main": 1,
-    "serious": [],
-    "consoleErrors": []
+    "seriousOrCritical": [],
+    "errors": []
   },
   {
     "viewport": {
@@ -19,11 +16,8 @@
     },
     "path": "/demo",
     "status": 200,
-    "title": "Demo — Room Code Mystery",
-    "h1": 1,
-    "main": 1,
-    "serious": [],
-    "consoleErrors": []
+    "seriousOrCritical": [],
+    "errors": []
   },
   {
     "viewport": {
@@ -32,11 +26,8 @@
     },
     "path": "/setup",
     "status": 200,
-    "title": "Start a room — Room Code Mystery",
-    "h1": 1,
-    "main": 1,
-    "serious": [],
-    "consoleErrors": []
+    "seriousOrCritical": [],
+    "errors": []
   },
   {
     "viewport": {
@@ -45,11 +36,8 @@
     },
     "path": "/privacy",
     "status": 200,
-    "title": "Privacy — Room Code Mystery",
-    "h1": 1,
-    "main": 1,
-    "serious": [],
-    "consoleErrors": []
+    "seriousOrCritical": [],
+    "errors": []
   },
   {
     "viewport": {
@@ -58,11 +46,8 @@
     },
     "path": "/terms",
     "status": 200,
-    "title": "Terms — Room Code Mystery",
-    "h1": 1,
-    "main": 1,
-    "serious": [],
-    "consoleErrors": []
+    "seriousOrCritical": [],
+    "errors": []
   },
   {
     "viewport": {
@@ -71,11 +56,8 @@
     },
     "path": "/missing-page",
     "status": 404,
-    "title": "Page not found — Room Code Mystery",
-    "h1": 1,
-    "main": 1,
-    "serious": [],
-    "consoleErrors": []
+    "seriousOrCritical": [],
+    "errors": []
   },
   {
     "viewport": {
@@ -84,11 +66,8 @@
     },
     "path": "/",
     "status": 200,
-    "title": "Room Code Mystery — Play a three-round mystery",
-    "h1": 1,
-    "main": 1,
-    "serious": [],
-    "consoleErrors": []
+    "seriousOrCritical": [],
+    "errors": []
   },
   {
     "viewport": {
@@ -97,11 +76,8 @@
     },
     "path": "/demo",
     "status": 200,
-    "title": "Demo — Room Code Mystery",
-    "h1": 1,
-    "main": 1,
-    "serious": [],
-    "consoleErrors": []
+    "seriousOrCritical": [],
+    "errors": []
   },
   {
     "viewport": {
@@ -110,11 +86,8 @@
     },
     "path": "/setup",
     "status": 200,
-    "title": "Start a room — Room Code Mystery",
-    "h1": 1,
-    "main": 1,
-    "serious": [],
-    "consoleErrors": []
+    "seriousOrCritical": [],
+    "errors": []
   },
   {
     "viewport": {
@@ -123,11 +96,8 @@
     },
     "path": "/privacy",
     "status": 200,
-    "title": "Privacy — Room Code Mystery",
-    "h1": 1,
-    "main": 1,
-    "serious": [],
-    "consoleErrors": []
+    "seriousOrCritical": [],
+    "errors": []
   },
   {
     "viewport": {
@@ -136,11 +106,8 @@
     },
     "path": "/terms",
     "status": 200,
-    "title": "Terms — Room Code Mystery",
-    "h1": 1,
-    "main": 1,
-    "serious": [],
-    "consoleErrors": []
+    "seriousOrCritical": [],
+    "errors": []
   },
   {
     "viewport": {
@@ -149,10 +116,7 @@
     },
     "path": "/missing-page",
     "status": 404,
-    "title": "Page not found — Room Code Mystery",
-    "h1": 1,
-    "main": 1,
-    "serious": [],
-    "consoleErrors": []
+    "seriousOrCritical": [],
+    "errors": []
   }
 ]

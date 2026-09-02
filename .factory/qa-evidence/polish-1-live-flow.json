@@ -1,9 +1,83 @@
 {
-  "code": "VD6RP",
-  "guestRound": "Three rounds completed",
-  "title": "Room Code Mystery — Play a three-round mystery",
-  "h1": 1,
-  "main": 1,
-  "cta": true,
+  "code": "7YQDA",
+  "synchronized": true,
+  "completeRun": true,
+  "demoIsolation": {
+    "real": true,
+    "demo": 1
+  },
+  "demoCleared": true,
+  "rootFacts": [
+    "Price: two free cases",
+    "Privacy: private clues stay local",
+    "Offline: demo reloads after one visit"
+  ],
+  "version": "v1.1 · Original generated field-guide art",
+  "routes": {
+    "/": {
+      "status": 200,
+      "title": "Room Code Mystery — Play a three-round mystery",
+      "canonical": "https://room-code-mystery.sociobot.in/",
+      "h1": 1,
+      "main": 1,
+      "privacy": 2,
+      "terms": 1
+    },
+    "/demo": {
+      "status": 200,
+      "title": "Demo — Room Code Mystery",
+      "canonical": "https://room-code-mystery.sociobot.in/demo",
+      "h1": 1,
+      "main": 1,
+      "privacy": 2,
+      "terms": 1
+    },
+    "/setup": {
+      "status": 200,
+      "title": "Start a room — Room Code Mystery",
+      "canonical": "https://room-code-mystery.sociobot.in/setup",
+      "h1": 1,
+      "main": 1,
+      "privacy": 2,
+      "terms": 2
+    },
+    "/play": {
+      "status": 200,
+      "title": "Your room — Room Code Mystery",
+      "canonical": "https://room-code-mystery.sociobot.in/play",
+      "h1": 1,
+      "main": 1,
+      "privacy": 2,
+      "terms": 1
+    },
+    "/privacy": {
+      "status": 200,
+      "title": "Privacy — Room Code Mystery",
+      "canonical": "https://room-code-mystery.sociobot.in/privacy",
+      "h1": 1,
+      "main": 1,
+      "privacy": 2,
+      "terms": 1
+    },
+    "/terms": {
+      "status": 200,
+      "title": "Terms — Room Code Mystery",
+      "canonical": "https://room-code-mystery.sociobot.in/terms",
+      "h1": 1,
+      "main": 1,
+      "privacy": 2,
+      "terms": 1
+    },
+    "/missing-page": {
+      "status": 404,
+      "title": "Page not found — Room Code Mystery",
+      "canonical": "https://room-code-mystery.sociobot.in/404.html",
+      "h1": 1,
+      "main": 1,
+      "privacy": 2,
+      "terms": 1
+    }
+  },
+  "accusationSent": false,
   "errors": []
 }

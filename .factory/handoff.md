@@ -27,13 +27,14 @@ npm audit --audit-level=high
 
 Verified on 2026-09-02:
 
-- 5 Vitest unit tests passed.
-- 22 Playwright browser tests passed, including all 19 claim tests.
+- From clean clone `/tmp/rcm-clean-HdOn9m`, 5 Vitest unit tests and 22 Playwright browser tests passed.
+- All 19 exact commands from `.factory/claims.json` passed separately in that clean clone.
 - A two-context room completed from creation through three synchronized rounds and shared reveal.
 - The demo reset preserved the exact real `rcm:game` value and `/?demo=1` opened isolated sample data.
 - Offline demo reload passed in its own browser context.
 - Production build: JavaScript 36.82 KB raw / 12.91 KB gzip; CSS 17.13 KB raw / 4.75 KB gzip.
-- Live Lighthouse: performance 100, accessibility 100, best practices 100, SEO 100; LCP 1.7 s and CLS 0.
+- Live Lighthouse: performance 99, accessibility 100, best practices 100, SEO 100; LCP 2.0 s and CLS 0.
+- Live offline reload returned 200 with the demo banner, round one, and offline notice.
 - Live Axe: zero serious or critical violations on `/`, `/demo`, `/setup`, `/privacy`, `/terms`, and the 404 at 1440×900 and 390×844.
 - Fleet URL verification passed with no console errors, one h1, one main landmark, language, title, image alt text, and labelled buttons.
 - Dependency audit found zero vulnerabilities.
