@@ -42,6 +42,10 @@ From a clean dependency install (`npm ci`, 59 packages, 0 audit findings):
   flows, 6 timer/mobile/settings flows, and 5 root/link/accessibility/route
   flows. This is the same suite run by `npm test`; the bounded runs avoid the
   worker execution time limit in this repair environment.
+- The three newly declared commands also passed exactly as recorded:
+  `npm test -- --grep @claim:cold-root-game`,
+  `npm test -- --grep @claim:additional-case`, and
+  `npm test -- --grep @claim:link-crawl`.
 - Playwright Axe: zero serious/critical findings on `/`, `/setup`, `/demo`,
   `/privacy`, `/terms`, and the 404 route.
 - `npm run build`: passed and produced `dist/`. Initial JS is 29.93 kB raw /
