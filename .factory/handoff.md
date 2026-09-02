@@ -57,8 +57,21 @@ From a clean dependency install (`npm ci`, 59 packages, 0 audit findings):
   The original reproduced setup-wall capture is
   [`baseline-root-menu-wall.png`](qa-evidence/baseline-root-menu-wall.png).
 
-## Deployment
+## Deployment and live identity
 
-Static deployment is performed from `dist/` after this commit is pushed. The
-product remains static and local-first: no accounts, analytics, backend, or
-shared billing access was added.
+Deployed from `dist/` to the product-owned `sf-room-code-mystery` Static Web
+App in resource group `sociobot` after pushing `21f41c8`. The live root now
+matches the verified build byte-for-byte:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `index.html` | `6641c676d820b10693c4caa0fead1581b556a2ea4fc10fee1850aa5284189b3a` |
+| `assets/index-Bts43FZw.js` | `cc3c93eedca5fd1e964a562b86d5955d64bf7f8247ee081a0f29ea91d94ab74f` |
+| `assets/index-D12PlBB6.css` | `53a70220e75f6afb9d510f4178ee04f6bba0b35c59859dbbe68296e89f41ffd3` |
+
+Live `/`, `/demo`, `/setup`, `/privacy`, and `/terms` return 200; the missing
+route returns the designed 404. Live `verify-url.sh` passed with no browser
+console errors; its evidence is
+[`repair-live-root-verify/verify.json`](qa-evidence/repair-live-root-verify/verify.json).
+The product remains static and local-first: no accounts, analytics, backend,
+or shared billing access was added.
