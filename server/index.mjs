@@ -18,8 +18,9 @@ const allowedOrigins = new Set([
 
 mkdirSync(dirname(DB_PATH), { recursive: true });
 const db = new Database(DB_PATH);
-db.pragma('busy_timeout = 5000');
-db.exec(`CREATE TABLE IF NOT EXISTS rooms (
+db.pragma('busy_timeout = 30000');
+let databaseReady = false;
+const schema = `CREATE TABLE IF NOT EXISTS rooms (
   code TEXT PRIMARY KEY,
   case_id TEXT NOT NULL,
   players INTEGER NOT NULL CHECK(players BETWEEN 4 AND 8),
@@ -30,7 +31,18 @@ db.exec(`CREATE TABLE IF NOT EXISTS rooms (
   paused INTEGER NOT NULL DEFAULT 1,
   updated_at INTEGER NOT NULL,
   expires_at INTEGER NOT NULL
-)`);
+)`;
+
+function initializeDatabase() {
+  try {
+    db.exec(schema);
+    databaseReady = true;
+    console.log(`SQLite ready at ${DB_PATH}`);
+  } catch (error) {
+    console.error('SQLite is waiting for its durable file lock.', error.code || error);
+    setTimeout(initializeDatabase, 5_000);
+  }
+}
 
 const app = new Hono();
 const sockets = new Map();
@@ -87,6 +99,7 @@ app.use('*', async (c, next) => {
   window.count += 1;
   requestWindows.set(client, window);
   if (window.count > 180) return c.json({ error: 'Too many requests. Try again in one minute.' }, 429);
+  if (!databaseReady && c.req.path !== '/health') return c.json({ error: 'Room storage is starting. Try again shortly.' }, 503);
   await next();
   if (origin) {
     c.header('Access-Control-Allow-Origin', origin);
@@ -106,7 +119,7 @@ app.options('*', (c) => {
   return c.body(null, 204);
 });
 
-app.get('/health', (c) => c.json({ ok: true, storage: 'sqlite', ttlHours: 6 }));
+app.get('/health', (c) => c.json({ ok: databaseReady, storage: 'sqlite', ttlHours: 6 }, databaseReady ? 200 : 503));
 
 app.post('/rooms', async (c) => {
   if (Number(c.req.header('content-length') || 0) > 2_048) return c.json({ error: 'Request is too large.' }, 413);
@@ -189,6 +202,7 @@ app.onError((error, c) => {
 });
 
 const wss = new WebSocketServer({ noServer: true, maxPayload: 2_048 });
+initializeDatabase();
 serve({ fetch: app.fetch, port: PORT, hostname: '0.0.0.0', websocket: { server: wss } }, (info) => {
   console.log(`Room service listening on ${info.port}; database ${DB_PATH}`);
 });
