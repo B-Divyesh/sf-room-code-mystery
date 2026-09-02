@@ -1,0 +1,12 @@
+{
+  "name": "Room Code Mystery",
+  "short_name": "Room Mystery",
+  "description": "A three-round browser mystery for 4–8 friends.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#17251f",
+  "theme_color": "#17251f",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

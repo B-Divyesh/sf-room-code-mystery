@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://room-code-mystery.sociobot.in/sitemap.xml
