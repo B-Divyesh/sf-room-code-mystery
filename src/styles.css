@@ -72,7 +72,7 @@ h3 { font-size: 24px; }
 .room-actions { display: grid; gap: 24px; }
 .room-form { display: grid; gap: 9px; }
 .room-form h3 { margin: 14px 0 4px; color: var(--brass); }
-.room-form label, .restore-form label { font-size: 14px; font-weight: 700; }
+.room-form label { font-size: 14px; font-weight: 700; }
 .room-desk .button.secondary { border-color: var(--paper); color: var(--paper); }
 .room-desk .button.secondary:hover { color: var(--green-deep); background: var(--paper); }
 input, select { width: 100%; padding: 10px 12px; border: 1px solid #7d8a80; border-radius: 0; color: var(--ink); background: var(--paper-raised); }
@@ -99,14 +99,17 @@ input, select { width: 100%; padding: 10px 12px; border: 1px solid #7d8a80; bord
 .price-block strong { font: 700 64px/1 Georgia, serif; }
 .price-block.availability strong { max-width: 10ch; font-size: 32px; }
 .price-block span { margin-bottom: 18px; color: var(--muted); }
-.restore-form { grid-column: 1 / -1; max-width: 650px; margin-top: 24px; }
-.restore-form > div { display: grid; grid-template-columns: 1fr auto; gap: 12px; margin-top: 8px; }
-.license-notice, .legal-line { min-height: 24px; margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+.legal-line { min-height: 24px; margin: 8px 0 0; color: var(--muted); font-size: 14px; }
 
 .game-main { position: relative; min-height: calc(100vh - 72px); padding: clamp(24px, 6vw, 72px); overflow: hidden; background: #112019; }
 .game-backdrop { position: absolute; inset: 0; opacity: 0.24; background-image: url('/art/herbarium-desk.webp'); background-position: center; background-size: cover; filter: saturate(0.7); }
+.root-intro { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px 32px; align-items: end; width: min(900px, 100%); margin: 0 auto 16px; padding: 20px 24px; }
+.root-intro h1 { max-width: 19ch; margin-bottom: 8px; font-size: clamp(30px, 4vw, 46px); }
+.root-intro > div:first-child > p:last-child { margin-bottom: 0; color: var(--muted); }
+.root-actions { display: grid; justify-items: start; gap: 7px; min-width: 220px; color: var(--muted); font-size: 14px; }
+.root-actions .text-button { margin-left: 0; color: var(--wax-dark); }
 .lobby-sheet, .accusation-sheet, .reveal-sheet, .game-sheet { --focus-ring: var(--wax-dark); position: relative; z-index: 1; width: min(900px, 100%); margin: 0 auto; padding: clamp(24px, 5vw, 56px); color: var(--ink); background: var(--paper); animation: paper-settle 220ms ease-out both; }
-.lobby-sheet h1, .accusation-sheet h1, .reveal-sheet h1, .game-sheet h1 { max-width: 18ch; font-size: clamp(38px, 6vw, 62px); }
+.lobby-sheet h1, .accusation-sheet h1, .reveal-sheet h1, .game-sheet h1, .root-game .lobby-sheet h2, .root-game .accusation-sheet h2, .root-game .reveal-sheet h2, .root-game .game-sheet h2 { max-width: 18ch; font-size: clamp(38px, 6vw, 62px); }
 .code-card { display: flex; align-items: center; gap: 20px; margin: 32px 0; padding: 18px 20px; color: var(--paper); background: var(--green); }
 .code-card strong { font: 700 34px/1 Georgia, serif; letter-spacing: 0.18em; }
 .text-button { min-height: 44px; margin-left: auto; border: 0; color: var(--brass); background: transparent; text-decoration: underline; cursor: pointer; }
@@ -122,7 +125,7 @@ input, select { width: 100%; padding: 10px 12px; border: 1px solid #7d8a80; bord
 .timer { display: flex; align-items: center; gap: 14px; }
 .timer strong { font: 700 28px/1 ui-monospace, SFMono-Regular, Consolas, monospace; font-variant-numeric: tabular-nums; }
 .timer-ended { color: #ffd3c9; }
-.sound-toggle { flex: none; border: 0; color: var(--muted); background: transparent; text-decoration: underline; cursor: pointer; }
+.sound-toggle { flex: none; min-height: 45px; border: 0; color: var(--muted); background: transparent; text-decoration: underline; cursor: pointer; }
 .clue-layout { display: grid; grid-template-columns: minmax(230px, 0.8fr) minmax(0, 1.2fr); gap: clamp(28px, 5vw, 60px); align-items: center; }
 .specimen { display: block; width: 100%; height: auto; transform: rotate(-1.5deg); filter: drop-shadow(0 12px 12px rgb(25 36 31 / 18%)); }
 .specimen-paper { fill: #e9dfc3; stroke: #7e887f; }
@@ -175,7 +178,6 @@ footer p { margin: 4px 0 0; }
   .steps, .paid, .boundaries { grid-template-columns: 1fr; }
   .steps { display: block; }
   .steps li, .steps li:nth-child(2), .steps li:last-child { padding: 24px 0; border-right: 0; border-bottom: 1px solid #98a098; }
-  .restore-form { grid-column: auto; }
   .paid { gap: 28px; }
 }
 
@@ -198,9 +200,13 @@ footer p { margin: 4px 0 0; }
   .plain-facts { display: grid; }
   .how, .paid, .boundaries { padding: 64px 22px; }
   .game-main { padding: 12px 12px 32px; }
+  .root-intro { grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; padding: 16px 18px; }
+  .root-intro h1 { font-size: 30px; }
+  .root-actions { grid-template-columns: auto 1fr; align-items: center; gap: 6px 10px; }
+  .root-actions .text-button { grid-column: 1 / -1; min-height: 44px; }
   .lobby-sheet, .accusation-sheet, .reveal-sheet, .game-sheet { padding: 20px 18px; }
   .lobby-sheet h1, .accusation-sheet h1, .reveal-sheet h1 { font-size: 38px; }
-  .game-sheet h1 { margin-bottom: 8px; font-size: 32px; }
+  .game-sheet h1, .root-game .game-sheet h2 { margin-bottom: 8px; font-size: 32px; }
   .round-bar { margin: -20px -18px 14px; padding: 10px 18px; }
   .round-bar span { font-size: 11px; }
   .timer { display: grid; gap: 2px; text-align: right; }
@@ -215,7 +221,6 @@ footer p { margin: 4px 0 0; }
   .seat-grid, .suspect-list { grid-template-columns: 1fr 1fr; }
   .code-card { flex-wrap: wrap; gap: 10px 16px; }
   .code-card .text-button { width: 100%; margin: 0; }
-  .restore-form > div { grid-template-columns: 1fr; }
   footer { grid-template-columns: 1fr; }
   .build-note { grid-column: auto; }
   .site-header a, .footer-links a, .simple-page a, .legal-line a { display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; }

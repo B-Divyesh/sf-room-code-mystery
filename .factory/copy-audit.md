@@ -2,20 +2,28 @@
 
 Audited on 2026-09-02. Counts treat hyphenated ranges and contractions as one word. Interface fragments, field labels, prices, and button labels are listed separately because they are not sentences. No banned words appear in the landing copy.
 
-## First screen and room desk
+## Cold root game screen
 
 | Sentence | Words | Result |
 | --- | ---: | --- |
 | Solve a mystery with your friends | 7 | Pass; headline under 9 words |
+| Compare private clues on a call and make one group accusation. | 11 | Pass |
+| Round one is ready below. | 5 | Pass |
+
+Primary action: “Try it with sample data.” The active round, timer, and “Open round 2” action are already visible on the cold root. “Start a private room” leads to the create/join page.
+
+## Private room setup
+
+| Sentence | Words | Result |
+| --- | ---: | --- |
 | For 4–8 friends on a video call who want three rounds of shared clues. | 14 | Pass |
 | Opens round one with six sample players. | 7 | Pass |
 | One friend creates the code. | 5 | Pass |
 | Everyone else joins with it. | 5 | Pass |
-| Room [code] is saved on this device. | 7 | Pass |
+| Choose The Glasshouse Lantern or The Orchid Ledger when you create a room. | 12 | Pass |
+| No checkout or license is required. | 6 | Pass |
 | That code is not valid. | 5 | Pass |
 | Ask the host for all five characters and try again. | 10 | Pass |
-
-Primary action: “Try it with sample data.” Real actions: “Create room code” and “Open player notebooks.” Facts: “Starter case: free,” “Players: 4–8,” and “Storage: this device only.”
 
 ## How it works
 
@@ -32,11 +40,9 @@ Primary action: “Try it with sample data.” Real actions: “Create room code
 | No account or public matchmaking. | 5 | Pass |
 | No voice, video, or accusations are uploaded. | 7 | Pass |
 | No computer decides whether your reasoning is good. | 8 | Pass |
-| New checkout is unavailable. | 4 | Pass |
-| The free Glasshouse Lantern case remains fully playable. | 8 | Pass |
-| No checkout is offered. | 4 | Pass |
+| Two handcrafted cases are free to play. | 7 | Pass |
+| Both cases are ready now. | 5 | Pass |
 | No payment is taken on this site. | 7 | Pass |
-| Existing license terms are explained in the terms. | 8 | Pass |
 
 ## Demo banner
 
@@ -55,7 +61,6 @@ Primary action: “Try it with sample data.” Real actions: “Create room code
 | Final group choice | accusation |
 | Answer screen | reveal |
 | Additional content | case |
-| Existing access credential | license |
 
 ## Catalog description
 

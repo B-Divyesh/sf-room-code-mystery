@@ -1,5 +1,5 @@
-const CACHE = 'room-code-mystery-v2';
-const SHELL = ['/', '/demo', '/index.html', '/favicon.svg', '/manifest.webmanifest', '/art/herbarium-desk.webp', '/art/herbarium-desk-900.webp'];
+const CACHE = 'room-code-mystery-v3';
+const SHELL = ['/', '/demo', '/setup', '/index.html', '/favicon.svg', '/manifest.webmanifest', '/art/herbarium-desk.webp', '/art/herbarium-desk-900.webp'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));

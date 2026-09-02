@@ -20,7 +20,7 @@ test('@claim:complete-case reaches the answer after three timed rounds', async (
 });
 
 test('@claim:room-code gives 4–8 players deterministic private notebooks', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/setup');
   await page.getByLabel('Number of players').selectOption('8');
   await page.getByRole('button', { name: 'Create room code' }).click();
   const code = await page.locator('.code-card strong').textContent();
@@ -32,7 +32,7 @@ test('@claim:room-code gives 4–8 players deterministic private notebooks', asy
 });
 
 test('@claim:demo-sandbox resets sample state without changing real state', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/setup');
   await page.evaluate(() => localStorage.setItem('rcm:proof', 'real-data'));
   await page.goto('/demo');
   await page.getByRole('button', { name: 'Open round 2' }).click();
@@ -78,21 +78,17 @@ test('service worker update activates the current cache and removes the old cach
     await registration.update();
     return caches.keys();
   });
-  expect(cacheKeys).toContain('room-code-mystery-v2');
-  expect(cacheKeys).not.toContain('room-code-mystery-v1');
+  expect(cacheKeys).toContain('room-code-mystery-v3');
+  expect(cacheKeys).not.toContain('room-code-mystery-v2');
   await context.close();
 });
 
-test('@claim:paid-case states checkout is unavailable and restores an existing license', async ({ page }) => {
-  await page.route('https://api.sociobot.in/api/v1/products/room-code-mystery/verify?license=test-license', (route) => route.fulfill({ json: { valid: true, reason: 'ok', expires_at: null } }));
-  await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'The Orchid Ledger is not for sale' })).toBeVisible();
-  await expect(page.getByText('New checkout is unavailable.')).toBeVisible();
+test('@claim:additional-case makes both authored cases free without a checkout path', async ({ page }) => {
+  await page.goto('/setup');
+  await expect(page.getByRole('heading', { name: 'Two handcrafted cases are free to play' })).toBeVisible();
+  await expect(page.getByText('No checkout or license is required.')).toBeVisible();
   await expect(page.locator('a[href*="/checkout"]')).toHaveCount(0);
-  await page.getByLabel('Already have an Orchid Ledger license? Paste it here').fill('test-license');
-  await page.getByRole('button', { name: 'Verify existing license' }).click();
-  await expect(page.getByText('The Orchid Ledger is ready to play.')).toBeVisible();
-  await page.getByLabel('Case').selectOption('orchid-ledger');
+  await page.getByLabel('Case', { exact: true }).selectOption('orchid-ledger');
   await page.getByRole('button', { name: 'Create room code' }).click();
   await page.getByRole('button', { name: 'Open round one' }).click();
   await expect(page.locator('.game-sheet .eyebrow')).toHaveText('The Orchid Ledger');
@@ -188,12 +184,45 @@ test('@claim:render-rate keeps the game screen above 55 fps in the mobile browse
   expect(fps).toBeGreaterThanOrEqual(55);
 });
 
+test('@claim:cold-root-game shows and plays an active sample round before room setup', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1, name: 'Solve a mystery with your friends' })).toBeVisible();
+  await expect(page.getByText('Round 1 of 3')).toBeVisible();
+  await expect(page.getByLabel(/3:00 remaining/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Open round 2' })).toBeVisible();
+  await expect(page.locator('.room-desk')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Open round 2' }).click();
+  await expect(page.getByText('Round 2 of 3')).toBeVisible();
+});
+
+test('@claim:link-crawl follows every site link and reaches the live factory home', async ({ page, request }) => {
+  const checked = new Set<string>();
+  for (const path of ['/', '/demo', '/setup', '/privacy', '/terms']) {
+    await page.goto(path);
+    const links = await page.locator('a[href]').evaluateAll((anchors) => anchors.map((anchor) => (anchor as HTMLAnchorElement).href));
+    for (const href of links) {
+      if (href.startsWith('mailto:') || href.includes('#')) continue;
+      if (checked.has(href)) continue;
+      checked.add(href);
+      const response = await request.get(href);
+      expect(response.status(), href).toBeLessThan(400);
+    }
+  }
+  expect(checked).toContain('https://hello-factory.sociobot.in/');
+});
+
 test('landing and mobile game have no serious accessibility findings', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('h1')).toHaveCount(1);
   await expect(page.locator('main')).toHaveCount(1);
-  await expect(page.locator('img[alt]')).toHaveCount(1);
   let results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);
+
+  await page.goto('/setup');
+  await expect(page.locator('h1')).toHaveCount(1);
+  await expect(page.locator('main')).toHaveCount(1);
+  await expect(page.locator('img[alt]')).toHaveCount(1);
+  results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter((violation) => ['serious', 'critical'].includes(violation.impact ?? ''))).toEqual([]);
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -210,7 +239,7 @@ test('landing and mobile game have no serious accessibility findings', async ({ 
 });
 
 test('invalid codes explain how to recover', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('/setup');
   await page.getByLabel('Five-character room code').fill('OOOOO');
   await page.getByRole('button', { name: 'Open player notebooks' }).click();
   await expect(page.getByRole('alert')).toContainText('Ask the host for all five characters');
@@ -220,7 +249,7 @@ test('@claim:not-found-status every route loads and unknown routes return 404', 
   const errors: string[] = [];
   page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
   page.on('pageerror', (error) => errors.push(error.message));
-  for (const path of ['/', '/demo', '/privacy', '/terms']) {
+  for (const path of ['/', '/demo', '/setup', '/privacy', '/terms']) {
     const response = await page.goto(path);
     expect(response?.status()).toBeLessThan(400);
     await expect(page.locator('h1')).toHaveCount(1);

@@ -2,13 +2,13 @@
 
 Solve a three-round browser mystery with 4–8 friends and one shared room code. Each player opens a different private notebook, reads one clue per round, and helps the host make one accusation.
 
-The Glasshouse Lantern is fully playable for free. New checkout for The Orchid Ledger is unavailable. Existing license holders can restore access to its 24 clues. The game has no accounts, public matchmaking, voice, video, or automated judgments.
+The Glasshouse Lantern and The Orchid Ledger are fully playable for free. The game has no checkout, accounts, public matchmaking, voice, video, or automated judgments.
 
 Live site: <https://room-code-mystery.sociobot.in>
 
 ## Try the sample room
 
-Open `/demo` or <https://room-code-mystery.sociobot.in/demo>. It starts round one with room `C7K2M`, six player notebooks, and the free case. The banner can reset the sample or leave for a real room.
+Open `/` or `/demo` to start round one with room `C7K2M`, six player notebooks, and the free case. The root route is an active game screen for a quick first play. The banner can reset the sample or leave for a real room.
 
 Demo state uses `demo:rcm:game`. Real state uses `rcm:game`. Resetting or leaving the demo removes only its sample state. See [`.factory/demo.md`](.factory/demo.md) for the verifier flow.
 
@@ -38,7 +38,7 @@ An opened room reloads offline after its first visit. The service worker caches 
 
 The five-character room code deterministically identifies the case, player count, and clue arrangement. It does not connect browsers. Friends stay together on their existing call, advance when the host says so, and read their private clues aloud. This matches the static deployment without sending room activity to a server.
 
-An existing host license is verified through the Sociobot billing API. Participants can open that licensed case with the host’s code. The site offers no new checkout and embeds no payment provider.
+Choose either free case at `/setup`. The five-character code records the chosen case and player count locally. The site has no checkout or payment provider.
 
 ## Deployment
 
@@ -52,7 +52,7 @@ Publish `dist/` as the site root. `staticwebapp.config.json` supplies SPA fallba
 
 ## Privacy and accessibility
 
-Room codes, notebook choices, timers, and accusations stay on the device. License verification sends only the pasted license token to the Sociobot billing API. `/privacy` and `/terms` contain the complete product text.
+Room codes, notebook choices, timers, and accusations stay on the device. `/privacy` and `/terms` contain the complete product text.
 
 The interface includes stable keyboard focus, 44 px touch targets, one heading and main landmark per route, reduced motion, mobile layouts, and explicit timer controls. Tests cover the full game, offline reload, local privacy, mobile actions, and serious accessibility findings.
 

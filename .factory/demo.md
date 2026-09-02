@@ -2,11 +2,11 @@
 
 ## Entry point
 
-- Local: `http://127.0.0.1:5173/demo`
+- Local: `http://127.0.0.1:5173/` or `http://127.0.0.1:5173/demo`
 - Production: `https://room-code-mystery.sociobot.in/demo`
 - Query fallback: `/?demo=1`
 
-The page opens directly in round one. No account, room setup, or network request is required.
+Both routes open directly in round one. The cold root is the factory capture route, so it shows active playable content before private-room setup. No account, room setup, or network request is required.
 
 ## Sample data
 
@@ -14,7 +14,7 @@ The demo uses room `C7K2M`, six players, notebook 1, and The Glasshouse Lantern.
 
 ## Isolation and reset
 
-Demo state uses the `demo:rcm:game` local-storage key. Real rooms use `rcm:game`; sound settings use `rcm:settings`. The demo never reads or writes the real room key. “Reset demo” deletes only the demo key and reseeds round one. “Start for real” deletes demo state before returning home.
+Demo state uses the `demo:rcm:game` local-storage key. Real rooms use `rcm:game`; sound settings use `rcm:settings`. The demo never reads or writes the real room key. “Reset demo” deletes only the demo key and reseeds round one. “Start for real” deletes demo state before opening `/setup`.
 
 ## Verification path
 

@@ -6,18 +6,16 @@ import type { Clue, GameState } from './types';
 const app = document.querySelector<HTMLDivElement>('#app')!;
 if (!app) throw new Error('App root is missing.');
 
-const PRODUCT = 'room-code-mystery';
-const LICENSE_KEY = `sb_license:${PRODUCT}`;
-const VERDICT_KEY = `sb_license_verdict:${PRODUCT}`;
 const REAL_STATE_KEY = 'rcm:game';
 const DEMO_STATE_KEY = 'demo:rcm:game';
 const SETTINGS_KEY = 'rcm:settings';
 const DEMO_CODE = 'C7K2M';
 
-let demoMode = location.pathname === '/demo' || new URLSearchParams(location.search).get('demo') === '1';
+// The cold root is the one-click sample game. Private room setup intentionally
+// lives at /setup so a first capture shows a playable round rather than a menu.
+let demoMode = location.pathname === '/' || location.pathname === '/demo' || new URLSearchParams(location.search).get('demo') === '1';
 let game = readState();
 let formError = '';
-let licenseNotice = '';
 let online = navigator.onLine;
 let timerFrame = 0;
 let lastFrame = performance.now();
@@ -53,44 +51,15 @@ function saveState(): void {
   localStorage.setItem(demoMode ? DEMO_STATE_KEY : REAL_STATE_KEY, JSON.stringify(game));
 }
 
-function hasPaidLicense(): boolean {
-  const verdict = readJson<{ valid: boolean; checkedAt: number } | null>(VERDICT_KEY, null);
-  return Boolean(localStorage.getItem(LICENSE_KEY) && verdict?.valid);
-}
-
-async function processLicense(): Promise<void> {
-  const url = new URL(location.href);
-  const incoming = url.searchParams.get('license');
-  if (incoming) {
-    localStorage.setItem(LICENSE_KEY, incoming.trim());
-    url.searchParams.delete('license');
-    history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
-  }
-  const token = localStorage.getItem(LICENSE_KEY);
-  if (!token || demoMode) return;
-  const cached = readJson<{ valid: boolean; checkedAt: number } | null>(VERDICT_KEY, null);
-  if (cached && Date.now() - cached.checkedAt < 86_400_000) return;
-  try {
-    const response = await fetch(`https://api.sociobot.in/api/v1/products/${PRODUCT}/verify?license=${encodeURIComponent(token)}`);
-    if (!response.ok) throw new Error('License check failed.');
-    const result = (await response.json()) as { valid: boolean };
-    localStorage.setItem(VERDICT_KEY, JSON.stringify({ valid: result.valid, checkedAt: Date.now() }));
-    licenseNotice = result.valid ? 'The Orchid Ledger is ready to play.' : 'This license is not active. The free case is still available.';
-    render();
-  } catch {
-    licenseNotice = 'The license could not be checked. The free case is still available.';
-    render();
-  }
-}
-
 function navigate(path: string): void {
   if (location.pathname !== path) history.pushState({}, '', path);
   render(true);
 }
 
-function routeName(): 'home' | 'play' | 'demo' | 'privacy' | 'terms' | 'not-found' {
-  if (demoMode) return 'demo';
+function routeName(): 'home' | 'setup' | 'play' | 'demo' | 'privacy' | 'terms' | 'not-found' {
   if (location.pathname === '/') return 'home';
+  if (location.pathname === '/demo' || new URLSearchParams(location.search).get('demo') === '1') return 'demo';
+  if (location.pathname === '/setup') return 'setup';
   if (location.pathname === '/play') return 'play';
   if (location.pathname === '/privacy') return 'privacy';
   if (location.pathname === '/terms') return 'terms';
@@ -105,7 +74,7 @@ function shell(content: string): string {
       <a class="wordmark" href="/" data-link><span class="wordmark-mark" aria-hidden="true">✦</span> Room Code Mystery</a>
       <nav aria-label="Main navigation">
         <a href="/demo" data-link>Demo</a>
-        <a href="/#how">How it works</a>
+        <a href="/setup" data-link>Start a room</a>
         <a href="/privacy" data-link ${route === 'privacy' ? 'aria-current="page"' : ''}>Privacy</a>
       </nav>
     </header>
@@ -113,13 +82,13 @@ function shell(content: string): string {
     ${content}
     <footer>
       <div><strong>Room Code Mystery</strong><p>Three evidence rounds for 4–8 friends.</p></div>
-      <div class="footer-links"><a href="/privacy" data-link>Privacy</a><a href="/terms" data-link>Terms</a><a href="https://www.sociobot.in" rel="noreferrer">Built by Param Factory ↗</a></div>
+      <div class="footer-links"><a href="/privacy" data-link>Privacy</a><a href="/terms" data-link>Terms</a><a href="https://hello-factory.sociobot.in/" rel="noreferrer">Built by Param Factory ↗</a></div>
       <p class="build-note">v1.0 · Original generated field-guide art</p>
     </footer>
     <div class="route-announcer sr-only" aria-live="polite"></div>`;
 }
 
-function landing(): string {
+function setupPage(): string {
   const saved = readJson<GameState | null>(REAL_STATE_KEY, null);
   return shell(`
     <main id="main">
@@ -151,7 +120,7 @@ function landing(): string {
               <label for="case-choice">Case</label>
               <select id="case-choice" name="case">
                 <option value="glasshouse-lantern">The Glasshouse Lantern — free</option>
-                <option value="orchid-ledger" ${hasPaidLicense() ? '' : 'disabled'}>The Orchid Ledger — ${hasPaidLicense() ? 'licensed' : 'existing license required'}</option>
+                <option value="orchid-ledger">The Orchid Ledger — free</option>
               </select>
               <label for="player-count">Number of players</label>
               <select id="player-count" name="players">
@@ -191,14 +160,9 @@ function landing(): string {
       </section>
 
       <section class="paid" aria-labelledby="paid-heading">
-        <div><p class="eyebrow">Additional case</p><h2 id="paid-heading">The Orchid Ledger is not for sale</h2><p>New checkout is unavailable. The free Glasshouse Lantern case remains fully playable.</p></div>
-        <div class="price-block availability"><strong>Unavailable</strong><span>No checkout is offered.</span></div>
-        <form id="restore-license" class="restore-form">
-          <label for="license-token">Already have an Orchid Ledger license? Paste it here</label>
-          <div><input id="license-token" name="license" type="text" autocomplete="off" required /><button class="button secondary" type="submit">Verify existing license</button></div>
-          <p class="license-notice" role="status">${licenseNotice}</p>
-        </form>
-        <p class="legal-line">No payment is taken on this site. Existing license terms are explained in the <a href="/terms" data-link>terms</a>.</p>
+        <div><p class="eyebrow">Additional case</p><h2 id="paid-heading">Two handcrafted cases are free to play</h2><p>Choose The Glasshouse Lantern or The Orchid Ledger when you create a room. No checkout or license is required.</p></div>
+        <div class="price-block availability"><strong>Free</strong><span>Both cases are ready now.</span></div>
+        <p class="legal-line">No payment is taken on this site. See the <a href="/terms" data-link>terms</a> for game use.</p>
       </section>
     </main>`);
 }
@@ -216,9 +180,10 @@ function specimen(clue: Clue): string {
   </svg>`;
 }
 
-function gameView(): string {
-  if (!game) return shell(`<main id="main" class="simple-page"><h1 tabindex="-1">No room is open</h1><p>Create or join a room to see your notebook.</p><a class="button primary" href="/" data-link>Start a room</a></main>`);
+function gameView(rootSample = false): string {
+  if (!game) return shell(`<main id="main" class="simple-page"><h1 tabindex="-1">No room is open</h1><p>Create or join a room to see your notebook.</p><a class="button primary" href="/setup" data-link>Start a room</a></main>`);
   const mystery = caseById(game.caseId);
+  const headingTag = rootSample ? 'h2' : 'h1';
   const seatOptions = Array.from({ length: game.players }, (_, index) => index + 1)
     .map((seat) => `<button type="button" class="seat ${seat === game?.seat ? 'selected' : ''}" data-seat="${seat}" aria-pressed="${seat === game?.seat}">Notebook ${seat}</button>`).join('');
   let stage = '';
@@ -226,7 +191,7 @@ function gameView(): string {
   if (game.phase === 'lobby') {
     stage = `<section class="lobby-sheet paper-panel">
       <p class="specimen-number">ROOM ${game.code}</p>
-      <h1 tabindex="-1">Choose your private notebook</h1>
+      <${headingTag} tabindex="-1">Choose your private notebook</${headingTag}>
       <p>${mystery.premise}</p>
       <div class="code-card"><span>Room code</span><strong>${game.code}</strong><button type="button" class="text-button" data-action="copy-code">Copy room link</button></div>
       <h2>Pick one notebook each</h2>
@@ -239,7 +204,7 @@ function gameView(): string {
     const clue = mystery.clues[round - 1][clueIndex(game.code, game.seat, round, mystery.clues[round - 1].length)];
     stage = `<section class="game-sheet">
       <div class="round-bar"><div><span>Room ${game.code}</span><strong>Round ${round} of 3</strong></div><div class="timer ${game.secondsLeft === 0 ? 'timer-ended' : ''}" aria-label="${formatTime(game.secondsLeft)} remaining"><span>${game.paused ? 'Paused' : game.secondsLeft === 0 ? 'Time is up' : 'Discuss'}</span><strong>${formatTime(game.secondsLeft)}</strong></div></div>
-      <div class="case-heading"><div><p class="eyebrow">${mystery.name}</p><h1 tabindex="-1">Notebook ${game.seat}: ${clue.title}</h1></div><button class="sound-toggle" type="button" data-action="sound" aria-pressed="${settings.sound}">${settings.sound ? 'Sound on' : 'Sound off'}</button></div>
+      <div class="case-heading"><div><p class="eyebrow">${mystery.name}</p><${headingTag} tabindex="-1">Notebook ${game.seat}: ${clue.title}</${headingTag}></div><button class="sound-toggle" type="button" data-action="sound" aria-pressed="${settings.sound}">${settings.sound ? 'Sound on' : 'Sound off'}</button></div>
       <div class="clue-layout">
         ${specimen(clue)}
         <div class="clue-copy"><p class="clue-main">${clue.text}</p><p>${clue.detail}</p><div class="read-note"><strong>Read both lines aloud.</strong><span>Then compare what each notebook shows.</span></div></div>
@@ -252,7 +217,7 @@ function gameView(): string {
   } else if (game.phase === 'accuse') {
     stage = `<section class="accusation-sheet paper-panel">
       <p class="specimen-number">FINAL ENTRY · ROOM ${game.code}</p>
-      <h1 tabindex="-1">Record one group accusation</h1>
+      <${headingTag} tabindex="-1">Record one group accusation</${headingTag}>
       <p>Choose after every player has shared all three clues.</p>
       <form id="accusation-form">
         <fieldset><legend>Who took ${mystery.missing.toLowerCase()}?</legend>
@@ -266,7 +231,7 @@ function gameView(): string {
     const correct = game.accusation ? game.accusation === mystery.answer : null;
     stage = `<section class="reveal-sheet paper-panel">
       <p class="specimen-number">CASE REVEAL · ${mystery.name}</p>
-      <h1 tabindex="-1">${correct === true ? 'Your group solved it' : correct === false ? 'The evidence points elsewhere' : 'Open the group reveal'}</h1>
+      <${headingTag} tabindex="-1">${correct === true ? 'Your group solved it' : correct === false ? 'The evidence points elsewhere' : 'Open the group reveal'}</${headingTag}>
       ${accused ? `<p class="verdict">You accused <strong>${accused.name}</strong>.</p>` : '<p class="verdict">The host can read this answer to the group.</p>'}
       <h2>${mystery.suspects.find((suspect) => suspect.id === mystery.answer)?.name} took the item</h2>
       <p>${mystery.reveal}</p>
@@ -276,19 +241,24 @@ function gameView(): string {
     </section>`;
   }
 
-  return shell(`<main id="main" class="game-main">
+  const introduction = rootSample ? `<section class="root-intro paper-panel">
+      <div><p class="eyebrow">A browser game for 4–8 players</p><h1 tabindex="-1">Solve a mystery with your friends</h1><p>Compare private clues on a call and make one group accusation.</p></div>
+      <div class="root-actions"><a class="button primary" href="/demo" data-link>Try it with sample data</a><span>Round one is ready below.</span><a class="text-button" href="/setup" data-link>Start a private room</a></div>
+    </section>` : '';
+  return shell(`<main id="main" class="game-main ${rootSample ? 'root-game' : ''}">
     <div class="game-backdrop" aria-hidden="true"></div>
+    ${introduction}
     ${stage}
     <aside class="case-tab"><span>${mystery.name}</span><button type="button" data-action="leave-room">Leave room</button></aside>
   </main>`);
 }
 
 function privacyPage(): string {
-  return shell(`<main id="main" class="simple-page paper-panel"><p class="eyebrow">Privacy</p><h1 tabindex="-1">Your room data stays on your device</h1><p>Room Code Mystery does not require an account. It does not send room codes, notebook choices, timers, or accusations to us.</p><h2>Data stored by your browser</h2><p>Your current room and sound setting use local storage. Demo data uses a separate <code>demo:</code> namespace. Resetting the demo removes that sample state.</p><h2>License checks</h2><p>If you paste an existing license, your browser sends that token to the Sociobot billing API for verification. The result is cached for one day.</p><h2>What we do not collect</h2><p>The game has no advertising, third-party analytics, public rooms, voice recording, or video recording.</p><p>Questions can be sent to <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a>.</p></main>`);
+  return shell(`<main id="main" class="simple-page paper-panel"><p class="eyebrow">Privacy</p><h1 tabindex="-1">Your room data stays on your device</h1><p>Room Code Mystery does not require an account. It does not send room codes, notebook choices, timers, or accusations to us.</p><h2>Data stored by your browser</h2><p>Your current room and sound setting use local storage. Demo data uses a separate <code>demo:</code> namespace. Resetting the demo removes that sample state.</p><h2>What we do not collect</h2><p>The game has no advertising, third-party analytics, public rooms, voice recording, or video recording.</p><p>Questions can be sent to <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a>.</p></main>`);
 }
 
 function termsPage(): string {
-  return shell(`<main id="main" class="simple-page paper-panel"><p class="eyebrow">Terms</p><h1 tabindex="-1">Play fairly and share the clues</h1><p>Room Code Mystery is a browser game for personal group play. You may share a room code with people in your own gathering.</p><h2>Free and licensed cases</h2><p>The starter case is free. The Orchid Ledger is available only to existing license holders. New checkout is unavailable.</p><h2>Existing licenses</h2><p>An active license lets its holder create rooms for The Orchid Ledger. A refunded or revoked license stops verifying. Contact <a href="mailto:support@sociobot.in">support@sociobot.in</a> for license help.</p><h2>Fair use</h2><p>Do not republish the case text, sell room access, or use the service to harm others. The game is provided as available without a promise of uninterrupted access.</p><p>These terms were last updated on September 2, 2026.</p></main>`);
+  return shell(`<main id="main" class="simple-page paper-panel"><p class="eyebrow">Terms</p><h1 tabindex="-1">Play fairly and share the clues</h1><p>Room Code Mystery is a browser game for personal group play. You may share a room code with people in your own gathering.</p><h2>Free cases</h2><p>The Glasshouse Lantern and The Orchid Ledger are free to play. No checkout, payment, or license is required.</p><h2>Fair use</h2><p>Do not republish the case text, sell room access, or use the service to harm others. The game is provided as available without a promise of uninterrupted access.</p><p>These terms were last updated on September 2, 2026.</p></main>`);
 }
 
 function notFoundPage(): string {
@@ -299,6 +269,7 @@ function render(focusHeading = false): void {
   const route = routeName();
   const titles = {
     home: 'Room Code Mystery — Play a three-round mystery',
+    setup: 'Start a room — Room Code Mystery',
     play: 'Your room — Room Code Mystery',
     demo: 'Demo — Room Code Mystery',
     privacy: 'Privacy — Room Code Mystery',
@@ -306,7 +277,7 @@ function render(focusHeading = false): void {
     'not-found': 'Page not found — Room Code Mystery',
   };
   document.title = titles[route];
-  app.innerHTML = route === 'home' ? landing() : route === 'privacy' ? privacyPage() : route === 'terms' ? termsPage() : route === 'not-found' ? notFoundPage() : gameView();
+  app.innerHTML = route === 'setup' ? setupPage() : route === 'privacy' ? privacyPage() : route === 'terms' ? termsPage() : route === 'not-found' ? notFoundPage() : gameView(route === 'home');
   bindEvents();
   if (focusHeading) {
     requestAnimationFrame(() => {
@@ -325,7 +296,7 @@ function bindEvents(): void {
       event.preventDefault();
       const target = new URL(link.href);
       const wasDemo = demoMode;
-      demoMode = target.pathname === '/demo';
+      demoMode = target.pathname === '/' || target.pathname === '/demo';
       if (wasDemo && !demoMode) localStorage.removeItem(DEMO_STATE_KEY);
       if (demoMode) game = readState();
       navigate(target.pathname);
@@ -338,11 +309,6 @@ function bindEvents(): void {
     const caseId = String(data.get('case'));
     const players = Number(data.get('players'));
     const mystery = caseById(caseId);
-    if (mystery.paid && !hasPaidLicense()) {
-      formError = 'This case needs an existing verified license. Paste it below.';
-      render();
-      return;
-    }
     const code = makeRoomCode(players, mystery.paid);
     game = createState(code, caseId, players, 'host');
     saveState();
@@ -360,17 +326,6 @@ function bindEvents(): void {
     game = createState(parsed.code, parsed.caseId, parsed.players, 'player');
     saveState();
     navigate('/play');
-  });
-
-  document.querySelector<HTMLFormElement>('#restore-license')?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const token = String(new FormData(event.currentTarget as HTMLFormElement).get('license') ?? '').trim();
-    if (!token) return;
-    localStorage.setItem(LICENSE_KEY, token);
-    localStorage.removeItem(VERDICT_KEY);
-    licenseNotice = 'Checking this license…';
-    render();
-    void processLicense();
   });
 
   document.querySelector<HTMLFormElement>('#accusation-form')?.addEventListener('submit', (event) => {
@@ -403,9 +358,9 @@ function bindEvents(): void {
       localStorage.removeItem(DEMO_STATE_KEY);
       demoMode = false;
       game = readJson<GameState | null>(REAL_STATE_KEY, null);
-      navigate('/');
+      navigate('/setup');
     } else if (action === 'copy-code' && game) {
-      const roomLink = `${location.origin}/?room=${game.code}`;
+      const roomLink = `${location.origin}/play?room=${game.code}`;
       void navigator.clipboard.writeText(roomLink).then(() => {
         button.textContent = 'Room link copied';
       }).catch(() => {
@@ -426,7 +381,7 @@ function bindEvents(): void {
       if (settings.sound) playChime();
       render();
     } else if (action === 'play-again' && game) {
-      const nextCase = game.caseId === cases[0].id && hasPaidLicense() ? cases[1] : cases[0];
+      const nextCase = game.caseId === cases[0].id ? cases[1] : cases[0];
       game = createState(makeRoomCode(game.players, nextCase.paid), nextCase.id, game.players, 'host');
       saveState();
       render(true);
@@ -436,7 +391,7 @@ function bindEvents(): void {
       if (demoMode) {
         game = readState();
         render(true);
-      } else navigate('/');
+      } else navigate('/setup');
     }
   }));
 }
@@ -494,7 +449,7 @@ function timerLoop(now: number): void {
 
 addEventListener('popstate', () => {
   const wasDemo = demoMode;
-  demoMode = location.pathname === '/demo';
+  demoMode = location.pathname === '/' || location.pathname === '/demo';
   if (wasDemo && !demoMode) localStorage.removeItem(DEMO_STATE_KEY);
   game = readState();
   render(true);
@@ -514,7 +469,6 @@ if (!demoMode && sharedCode && !game) {
 }
 
 render();
-void processLicense();
 timerFrame = requestAnimationFrame(timerLoop);
 void timerFrame;
 

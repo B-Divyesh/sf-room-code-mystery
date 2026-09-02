@@ -35,11 +35,11 @@
     "sandbox": "dedicated browser context; load /demo, wait for its service worker, set offline, reload, and assert round one"
   },
   {
-    "id": "paid-case",
-    "claim": "Checkout is unavailable; an existing verified license opens the second 24-clue case.",
-    "where": "additional-case section, terms, README",
-    "test": "npm test -- --grep @claim:paid-case",
-    "sandbox": "fresh browser context; assert there is no checkout link, stub an existing license as valid, then create and open the second case"
+    "id": "additional-case",
+    "claim": "Both authored cases are free to play without checkout or a license.",
+    "where": "room setup, additional-case section, terms, README",
+    "test": "npm test -- --grep @claim:additional-case",
+    "sandbox": "fresh browser context at /setup; choose The Orchid Ledger, create a room, and assert its first clue opens with no checkout link"
   },
   {
     "id": "settings-persist",
@@ -89,5 +89,19 @@
     "where": "site configuration, handoff",
     "test": "npm test -- --grep @claim:not-found-status",
     "sandbox": "fresh browser context; request /missing-page, assert HTTP 404, and assert the recovery heading"
+  },
+  {
+    "id": "cold-root-game",
+    "claim": "The cold root opens an active sample game round, not room setup.",
+    "where": "root route, README",
+    "test": "npm test -- --grep @claim:cold-root-game",
+    "sandbox": "fresh browser context at /; assert a round, timer, and next-round action, then advance the sample round"
+  },
+  {
+    "id": "link-crawl",
+    "claim": "Every site link reaches a working destination.",
+    "where": "site header and footer, handoff",
+    "test": "npm test -- --grep @claim:link-crawl",
+    "sandbox": "fresh browser context crawls links from all product routes and requests each HTTP destination, including Hello Factory"
   }
 ]

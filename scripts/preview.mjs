@@ -10,7 +10,7 @@ const option = (name, fallback) => {
 const host = option('--host', '127.0.0.1');
 const port = Number(option('--port', '4173'));
 const root = join(process.cwd(), 'dist');
-const appRoutes = new Set(['/', '/index.html', '/demo', '/play', '/privacy', '/terms']);
+const appRoutes = new Set(['/', '/index.html', '/demo', '/setup', '/play', '/privacy', '/terms']);
 const contentTypes = new Map([
   ['.avif', 'image/avif'], ['.css', 'text/css; charset=utf-8'], ['.html', 'text/html; charset=utf-8'],
   ['.js', 'text/javascript; charset=utf-8'], ['.json', 'application/json; charset=utf-8'], ['.map', 'application/json; charset=utf-8'],
