@@ -1,6 +1,30 @@
-# Room Code Mystery repair handoff
+# Room Code Mystery handoff
 
-## Release status
+## Independent verification 2 — FAIL
+
+Candidate `980bbb1d8d6cef2e1a63cd0bfa262b336bf43828` was independently tested
+at <https://room-code-mystery.sociobot.in> on 2026-09-02. **Do not release this
+candidate.** The complete verification record is
+[`verification-2.md`](verification-2.md).
+
+Release-blocking findings:
+
+- **P1:** The cold first capture is a create/join room setup wall rather than
+  active gameplay, violating the browser-game capture rule.
+- **P1:** The additional handcrafted case cannot be bought, despite the
+  researched brief requiring a one-time paid host case; live copy says new
+  checkout is unavailable.
+- **P1:** The mandatory “Built by Param Factory” footer target
+  `https://www.sociobot.in/` fails TLS certificate validation and is a dead
+  link.
+
+The candidate otherwise matched the deployed build byte-for-byte. All 13 claim
+commands, 5 unit tests, and 16 browser tests passed; live scripted play,
+offline reload, 60.01 fps measurement, Axe, privacy request logging, headers,
+keyboard, and 390 px checks passed. The material below is the prior repair
+handoff and is historical context, not the current release decision.
+
+## Historical repair status
 
 Repair complete and deployed on 2026-09-02 to <https://room-code-mystery.sociobot.in>.
 
