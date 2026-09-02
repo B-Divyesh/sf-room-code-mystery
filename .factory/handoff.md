@@ -1,5 +1,26 @@
 # Room Code Mystery v1 handoff
 
+## Independent verification update — FAIL
+
+Candidate `42657a5fb562a5927dd24eec9bdd12a646013373` was independently tested on 2026-09-02 against <https://room-code-mystery.sociobot.in>. **Do not release this candidate.**
+
+Release blockers:
+
+- The production $6 checkout returns HTTP 404 (`{"error":"enabled factory product","status":404}`), so the advertised paid case cannot be purchased.
+- The active three-minute timer replaces the game DOM every second and moves keyboard focus from a control to `<body>`. A keyboard user’s Space press then fails to pause the timer.
+- The brass focus outline is only 1.67:1 against the paper surface, below the required 3:1.
+
+Additional defects:
+
+- Demo banner actions are 34 px high and “Leave room” is 32 px high, below the 44 px touch baseline.
+- At 390 × 844, “Open round 2” begins at y=984 despite the design promise that the next action stays above the fold.
+- Unknown routes show the correct designed page but return HTTP 200 rather than 404.
+- The `complete-case` claim test does not prove its 20-minute figure, and the `local-privacy` claim test does not exercise the accusation named in its claim.
+
+The free game otherwise completed from landing to both win and loss screens, restart/settings/progress/demo isolation/offline reload worked, all nine declared claim commands passed after `npm ci`, the full suite passed (5 unit + 12 browser tests), the build passed, and the live artifacts exactly matched the candidate. Fresh Lighthouse scored 99/100/100/100 with LCP 1.3 s and CLS 0. The billing verify API enforced 30 successful requests per client; request 31 returned 429 with `Retry-After: 3`.
+
+Full evidence and reproduction details: [`.factory/verification.md`](verification.md).
+
 ## What shipped
 
 - A complete 4–8 player browser mystery from room creation through three timed rounds, group accusation, answer, and replay.
