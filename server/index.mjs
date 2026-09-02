@@ -117,6 +117,7 @@ app.options('*', (c) => {
   return c.body(null, 204);
 });
 
+app.get('/', (c) => c.json({ service: 'room-code-mystery-realtime', ok: databaseReady }));
 app.get('/health', (c) => c.json({ ok: databaseReady, storage: 'sqlite', ttlHours: 6 }, databaseReady ? 200 : 503));
 
 app.post('/rooms', async (c) => {
