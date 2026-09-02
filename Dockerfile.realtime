@@ -3,6 +3,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 COPY server ./server
-ENV PORT=8080 DATABASE_PATH=/data/rooms-v2.sqlite NODE_ENV=production
+ENV PORT=8080 DATABASE_PATH=/data/rooms-v3.sqlite NODE_ENV=production
 EXPOSE 8080
 CMD ["node", "server/index.mjs"]
