@@ -1,69 +1,94 @@
-# Room Code Mystery v1 handoff
+# Room Code Mystery repair handoff
 
-## Independent verification update — FAIL
+## Release status
 
-Candidate `42657a5fb562a5927dd24eec9bdd12a646013373` was independently tested on 2026-09-02 against <https://room-code-mystery.sociobot.in>. **Do not release this candidate.**
+Repair complete and deployed on 2026-09-02 to <https://room-code-mystery.sociobot.in>.
 
-Release blockers:
+- Failed candidate: `42657a5fb562a5927dd24eec9bdd12a646013373`
+- Independent report: `43c8d46e82b92d34fe93dc60104bc2983028b383`
+- Repair commit: `85934d1`
+- Azure Static Web Apps deployment: `ddaddeb8-a841-4b02-b3b3-735e6dd01882`
+- Product resource: `sf-room-code-mystery` in `sociobot`
 
-- The production $6 checkout returns HTTP 404 (`{"error":"enabled factory product","status":404}`), so the advertised paid case cannot be purchased.
-- The active three-minute timer replaces the game DOM every second and moves keyboard focus from a control to `<body>`. A keyboard user’s Space press then fails to pause the timer.
-- The brass focus outline is only 1.67:1 against the paper surface, below the required 3:1.
+## Findings repaired
 
-Additional defects:
+- **Unavailable checkout:** The production endpoint was reproduced returning HTTP 404 with `{"error":"enabled factory product","status":404}`. The product no longer offers a buy link, price, or working-checkout claim. It now says that new checkout is unavailable. Existing license restoration remains available for prior license holders.
+- **Timer focus loss:** A timer tick previously replaced the application DOM and moved focus from “Pause timer” to `<body>`. Timer ticks and pause changes now update only the timer text, state, and button label. Focus remains on the button, and Space pauses the round.
+- **Focus contrast:** Paper controls now use sealing-wax `#873420` rather than brass. The indicator measures 7.06:1 against paper and 7.94:1 against raised paper. Dark surfaces retain the high-contrast brass ring.
+- **Touch targets:** “Reset demo,” “Start for real,” and “Leave room” now measure 44 px tall. The mobile regression checks every visible action on the active game screen.
+- **Mobile next action:** At 390 × 844, “Open round 2” now occupies y=368–417 on the deployed page. The clue title, timer, and next action are visible without scrolling.
+- **Real 404:** Known SPA routes have explicit rewrites. Unknown production paths return HTTP 404 and the designed recovery page. The production-faithful local preview server enforces the same contract.
+- **Claim coverage:** The case claim now states the testable three-round duration instead of an unmeasured 20-minute figure. Its test asserts 3:00 at the start of every round. The privacy test now submits and stores the accusation before proving that the full flow stays same-origin.
 
-- Demo banner actions are 34 px high and “Leave room” is 32 px high, below the 44 px touch baseline.
-- At 390 × 844, “Open round 2” begins at y=984 despite the design promise that the next action stays above the fold.
-- Unknown routes show the correct designed page but return HTTP 200 rather than 404.
-- The `complete-case` claim test does not prove its 20-minute figure, and the `local-privacy` claim test does not exercise the accusation named in its claim.
+The researched brief, deterministic case content, free game loop, demo isolation, settings, restart, and existing-license behavior were preserved. No new imagery or AI feature was needed for this repair.
 
-The free game otherwise completed from landing to both win and loss screens, restart/settings/progress/demo isolation/offline reload worked, all nine declared claim commands passed after `npm ci`, the full suite passed (5 unit + 12 browser tests), the build passed, and the live artifacts exactly matched the candidate. Fresh Lighthouse scored 99/100/100/100 with LCP 1.3 s and CLS 0. The billing verify API enforced 30 successful requests per client; request 31 returned 429 with `Retry-After: 3`.
+## Regression coverage
 
-Full evidence and reproduction details: [`.factory/verification.md`](verification.md).
+`.factory/claims.json` contains 13 claims, each with exactly one matching `@claim:<id>` browser test. New exact regressions cover:
 
-## What shipped
+- truthful unavailable checkout and absence of a checkout link;
+- focused timer behavior across a timed DOM update and Space activation;
+- computed focus-ring contrast against both paper tokens;
+- all visible 390 px game actions at 44 × 44 px or larger;
+- the next-round action within the 844 px viewport;
+- HTTP 404 plus designed recovery content;
+- service-worker update to cache `room-code-mystery-v2`.
 
-- A complete 4–8 player browser mystery from room creation through three timed rounds, group accusation, answer, and replay.
-- Deterministic five-character codes that reproduce the case, player count, and private clue assignment on each device.
-- Two original cases: the free Glasshouse Lantern and the paid Orchid Ledger. Each has 24 authored clues, four suspects, and one evidence-based solution.
-- Host and player views, numbered private notebooks, pauseable three-minute round timers, optional sound, refresh recovery, keyboard controls, touch layouts, error states, and an offline state.
-- A one-click `/demo` with isolated `demo:` storage, reset, and “Start for real.”
-- The Sociobot one-time license flow: checkout link, return-token capture, daily verification cache, restore field, optimistic cached access, and quiet failure handling.
-- `/privacy`, `/terms`, a styled not-found route and `404.html`, metadata, canonical and social tags, sitemap, robots, manifest, service worker, and Azure Static Web Apps security headers.
-- A botanical field-guide visual system with generated original hero art, responsive WebP assets, hand-authored clue drawings, and recorded provenance.
+Every command declared in `.factory/claims.json` passed independently.
 
-## Static deployment decision
+## Clean verification
 
-This work order deploys static files, so it cannot provide live cross-browser synchronization. The room code is the shared deterministic game packet instead. Friends enter the same code, choose distinct notebook numbers, and advance when the host speaks over their existing call. No room activity reaches a server. This preserves the requested remote personal views and human adjudication without pretending that the static product has realtime infrastructure.
-
-## Verification
-
-Run from a clean checkout:
+Run:
 
 ```sh
 npm ci
+npm run typecheck
 npm test
 npm run build
+npm audit --audit-level=high
 ```
 
-Results on 2026-09-02:
+Results from a clean install:
 
-- `npm test`: 5 deterministic unit tests and 12 Chromium tests passed.
-- Claim checks passed for full completion, 4–8 notebooks, demo isolation, local privacy, offline reload, paid license, saved sound, restart, and mobile render rate.
-- Axe via Playwright: 0 serious or critical findings on the landing page and the 390 × 844 game screen.
-- Route/console smoke test: `/`, `/demo`, `/privacy`, `/terms`, and the not-found route loaded with one `h1`, one `main`, and no console errors.
-- Lighthouse mobile: Performance 100, Accessibility 100, Best Practices 100, SEO 100.
-- Lighthouse metrics: FCP 0.9 s, LCP 1.7 s, CLS 0, Speed Index 0.9 s, initial transfer 123 KiB.
-- Mobile game render sample: 60.0 fps across 90 animation frames at 390 × 844.
-- Production bundles: JavaScript 11.4 KiB gzip; CSS 4.2 KiB gzip. Hero art: 50 KiB mobile and 133 KiB desktop.
-- `npm audit`: 0 vulnerabilities.
-- `npm run build`: passed and produced `dist/index.html`; total `dist/` size is 468 KiB.
+- `npm ci`: 59 packages installed; 0 vulnerabilities.
+- `npm run typecheck`: passed with TypeScript strict checks. There is no separate lint tool in this small vanilla TypeScript project.
+- `npm test`: 5 unit tests and 16 Chromium browser tests passed.
+- Playwright Axe: zero serious or critical findings on `/`, the 390 px `/demo`, `/privacy`, `/terms`, and the missing-page view.
+- Offline/update: a completed game reloaded offline; cache `room-code-mystery-v2` was active and the old cache was absent.
+- Privacy: the live demo through accusation and reveal contacted only `https://room-code-mystery.sociobot.in`.
+- `npm run build`: passed and produced `dist/` at 472 KiB total.
+- JavaScript: 31.32 KiB raw / 11.45 KiB gzip.
+- CSS: 14.92 KiB raw / 4.33 KiB gzip.
+- Mobile hero: 51,158 bytes; desktop hero: 136,168 bytes.
+- Local `verify-url.sh`: title, language, one `h1`, main landmark, image labels, button labels, and console checks passed.
 
-The generated hero was visually inspected for text artifacts, anatomy, brands, seams, and unintended symbols. None were found. The visual thesis influenced the clipped paper panels, brass focus treatment, dark greenhouse desk, quiet system type, and reduced-motion paper-settle transition.
+Local Lighthouse: Performance 99, Accessibility 100, Best Practices 100, SEO 100; FCP 1.2 s, LCP 1.8 s, CLS 0, TBT 0 ms.
 
-## Known gaps and next steps
+Live Lighthouse: Performance 100, Accessibility 100, Best Practices 100, SEO 100; FCP 1.0 s, LCP 1.3 s, CLS 0, TBT 0 ms, 126,426 transferred bytes.
 
-- The factory must register the production billing product before the checkout URL can sell licenses. No product ID is hardcoded.
-- Room progression is coordinated by voice, not synchronized over a backend. A future realtime edition would require a product-owned WebSocket service and a non-static deployment.
-- The service worker caches an opened app after the first online visit. A brand-new device still needs one network visit.
-- No infrastructure, DNS, billing account, or external service configuration was changed in this work order.
+Evidence:
+
+- [Repaired mobile game](qa-evidence/repair-mobile.png)
+- [Live completed mobile game](qa-evidence/repair-live-mobile-win.png)
+- [Local Lighthouse](qa-evidence/repair-lighthouse.json)
+- [Live Lighthouse](qa-evidence/repair-live-lighthouse.json)
+- [Live URL verification](qa-evidence/repair-live-verify/verify.json)
+
+## Live identity and response policy
+
+The deployed files match the tested local build byte-for-byte:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `index.html` | `18d3846d736013298312a849910f168622f370642e42e50faebcdd107a755d7f` |
+| `assets/index-CY-1KO9r.js` | `4affe5617f3b8856a3da320ac436d9a4af9033034e2accfce24da2d46feda42f` |
+| `assets/index-DYZrVIpE.css` | `e12c172cb6031a1d4a712b9afd6c41f1a16c8f72d61648178fae19b343c45b54` |
+
+Live `/`, `/demo`, `/privacy`, and `/terms` return 200. `/not-a-real-page` returns 404. Responses include CSP, HSTS, `X-Content-Type-Options`, `Referrer-Policy`, and a camera/microphone/geolocation-denying `Permissions-Policy`. The live `verify-url.sh` run found no console errors.
+
+## Known limits and next steps
+
+- New checkout remains unavailable because the production billing product is not enabled. This is stated plainly and no checkout link is rendered. If billing is enabled later, restore purchase copy only with a live checkout-and-return regression.
+- Existing-license restoration is covered with a deterministic valid-verification fixture; no real customer token was used during verification.
+- This remains a static, local-first game. Room progress is coordinated over the group’s existing call rather than synchronized by a backend.
+- Offline reload works after an initial online visit. A new device still needs that first visit.
