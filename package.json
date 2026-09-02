@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "realtime": "DATABASE_PATH=.data/rooms.sqlite node server/index.mjs",
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "node scripts/preview.mjs --host 127.0.0.1",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -14,8 +15,16 @@
   "devDependencies": {
     "@axe-core/playwright": "4.10.2",
     "@playwright/test": "1.58.2",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/ws": "^8.18.1",
     "typescript": "5.9.2",
     "vite": "7.3.6",
     "vitest": "3.2.7"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.1",
+    "better-sqlite3": "^12.2.0",
+    "hono": "^4.13.5",
+    "ws": "^8.21.3"
   }
 }

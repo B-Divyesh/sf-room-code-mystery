@@ -8,10 +8,10 @@
   },
   {
     "id": "room-code",
-    "claim": "One room code gives 4–8 players different private notebooks.",
+    "claim": "One room code synchronizes three rounds and the reveal across 4–8 player browsers while each notebook stays private.",
     "where": "landing page, game, README",
     "test": "npm test -- --grep @claim:room-code",
-    "sandbox": "fresh browser context; create an eight-player room and open notebook eight"
+    "sandbox": "two fresh browser contexts; create and join an eight-player room, compare notebook one and eight, then assert host rounds and reveal reach the guest"
   },
   {
     "id": "demo-sandbox",
@@ -22,21 +22,21 @@
   },
   {
     "id": "local-privacy",
-    "claim": "Room codes, notebook choices, timers, and accusations stay on the device.",
-    "where": "landing privacy section, privacy page, README",
+    "claim": "Demo room codes, notebook choices, timers, and accusations stay in the demo browser namespace.",
+    "where": "demo banner, privacy page, README",
     "test": "npm test -- --grep @claim:local-privacy",
-    "sandbox": "fresh browser context at /demo; submit an accusation, assert it is stored locally, and assert the complete flow stays same-origin"
+    "sandbox": "fresh browser context at /demo; submit an accusation, assert every game value is in demo storage, and assert the complete flow makes static GET requests only"
   },
   {
     "id": "offline-reload",
-    "claim": "An opened room reloads offline after the first visit.",
-    "where": "offline state, README",
+    "claim": "The demo reloads offline after the first visit.",
+    "where": "landing facts, offline state, README",
     "test": "npm test -- --grep @claim:offline-reload",
     "sandbox": "dedicated browser context; load /demo, wait for its service worker, set offline, reload, and assert round one"
   },
   {
     "id": "additional-case",
-    "claim": "Both authored cases are free to play without checkout or a license.",
+    "claim": "Both authored cases are free, and paid cases are unavailable until product checkout exists.",
     "where": "room setup, additional-case section, terms, README",
     "test": "npm test -- --grep @claim:additional-case",
     "sandbox": "fresh browser context at /setup; choose The Orchid Ledger, create a room, and assert its first clue opens with no checkout link"
@@ -103,5 +103,33 @@
     "where": "site header and footer, handoff",
     "test": "npm test -- --grep @claim:link-crawl",
     "sandbox": "fresh browser context crawls links from all product routes and requests each HTTP destination, including Hello Factory"
+  },
+  {
+    "id": "route-metadata",
+    "claim": "Every route has its own title, description, canonical URL, social title, focus restoration, and legal links.",
+    "where": "all routes",
+    "test": "npm test -- --grep @claim:route-metadata",
+    "sandbox": "fresh browser context visits every route, checks metadata and footer links, then checks navigation and Back focus"
+  },
+  {
+    "id": "reduced-motion",
+    "claim": "Reduced-motion mode removes paper movement.",
+    "where": "visual thesis, README",
+    "test": "npm test -- --grep @claim:reduced-motion",
+    "sandbox": "fresh browser context emulates reduced motion and measures the game sheet animation"
+  },
+  {
+    "id": "no-account-media",
+    "claim": "Playing needs no account, captures no voice or video, and uses no automated judgment.",
+    "where": "landing privacy section, privacy page, README",
+    "test": "npm test -- --grep @claim:no-account-media",
+    "sandbox": "fresh browser context completes a real room while checking for account controls, media capture calls, AI, auth, and analytics requests"
+  },
+  {
+    "id": "room-expiry",
+    "claim": "Synchronized room state expires six hours after the last host action.",
+    "where": "landing privacy section, privacy page, terms, README",
+    "test": "npm test -- --grep @claim:room-expiry",
+    "sandbox": "create a synchronized room and assert the server-assigned expiry is exactly six hours after its update timestamp"
   }
 ]

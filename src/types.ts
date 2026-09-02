@@ -31,6 +31,7 @@ export type GameState = {
   players: number;
   seat: number;
   role: 'host' | 'player';
+  hostToken?: string;
   round: 0 | 1 | 2 | 3;
   phase: 'lobby' | 'clue' | 'accuse' | 'reveal';
   secondsLeft: number;

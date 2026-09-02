@@ -1,6 +1,8 @@
 import './styles.css';
 import { caseById, cases } from './cases';
-import { clueIndex, createState, formatTime, makeRoomCode, nextRound, parseRoomCode, ROUND_SECONDS } from './core';
+import { clueIndex, createState, formatTime, makeRoomCode, nextRound, ROUND_SECONDS } from './core';
+import { connectRemoteRoom, createRemoteRoom, joinRemoteRoom, updateRemoteRoom } from './realtime';
+import type { SharedRoom } from './realtime';
 import type { Clue, GameState } from './types';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -20,6 +22,13 @@ let online = navigator.onLine;
 let timerFrame = 0;
 let lastFrame = performance.now();
 let timerAccumulator = 0;
+let roomSocket: WebSocket | null = null;
+let roomConnected = false;
+let roomBusy = false;
+let reconnectTimer = 0;
+let roomPollTimer = 0;
+let syncPending = false;
+let syncRequested = false;
 
 type Settings = { sound: boolean };
 const settings: Settings = readJson(SETTINGS_KEY, { sound: false });
@@ -49,6 +58,101 @@ function readState(): GameState | null {
 function saveState(): void {
   if (!game) return;
   localStorage.setItem(demoMode ? DEMO_STATE_KEY : REAL_STATE_KEY, JSON.stringify(game));
+}
+
+function gameFromShared(room: SharedRoom, current: GameState | null, role: 'host' | 'player', hostToken?: string): GameState {
+  const elapsed = room.paused ? 0 : Math.floor((Date.now() - room.updatedAt) / 1000);
+  return {
+    code: room.code,
+    caseId: room.caseId,
+    players: room.players,
+    role,
+    hostToken: hostToken ?? current?.hostToken,
+    seat: current?.seat && current.seat <= room.players ? current.seat : 1,
+    round: room.round,
+    phase: room.phase,
+    secondsLeft: Math.max(0, room.secondsLeft - elapsed),
+    paused: room.paused,
+    accusation: current?.accusation,
+  };
+}
+
+function sharedFromGame(state: GameState): SharedRoom {
+  return { ...state, updatedAt: Date.now(), expiresAt: Date.now() + 21_600_000 };
+}
+
+function disconnectRoom(): void {
+  clearTimeout(reconnectTimer);
+  clearInterval(roomPollTimer);
+  roomPollTimer = 0;
+  roomSocket?.close();
+  roomSocket = null;
+  roomConnected = false;
+}
+
+function connectRoom(): void {
+  if (demoMode || !game || roomSocket?.readyState === WebSocket.OPEN || roomSocket?.readyState === WebSocket.CONNECTING) return;
+  roomSocket = connectRemoteRoom(game.code, (room) => {
+    if (!game || game.code !== room.code || game.role === 'host') return;
+    const previousPhase = game.phase;
+    const previousRound = game.round;
+    game = gameFromShared(room, game, 'player');
+    saveState();
+    if (previousPhase !== game.phase || previousRound !== game.round || document.querySelector('.waiting-sheet')) render(true);
+    else updateTimerDom();
+  }, (connected) => {
+    roomConnected = connected;
+    document.querySelector<HTMLElement>('.sync-status')?.setAttribute('data-connected', String(connected));
+    const status = document.querySelector<HTMLElement>('.sync-status span');
+    if (status) status.textContent = connected ? 'Room connected' : 'Reconnecting';
+    if (!connected && !demoMode && game && navigator.onLine) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = window.setTimeout(() => { roomSocket = null; connectRoom(); }, 1_500);
+    }
+  });
+  if (game.role === 'player' && !roomPollTimer) {
+    roomPollTimer = window.setInterval(() => {
+      if (!game || demoMode || document.hidden) return;
+      void joinRemoteRoom(game.code).then((result) => {
+        if (!game || game.role !== 'player' || game.code !== result.room.code) return;
+        const previousPhase = game.phase;
+        const previousRound = game.round;
+        game = gameFromShared(result.room, game, 'player');
+        saveState();
+        if (previousPhase !== game.phase || previousRound !== game.round) render(true);
+        else updateTimerDom();
+      }).catch(() => updateSyncStatus('Reconnecting'));
+    }, 1_000);
+  }
+}
+
+async function syncHost(): Promise<void> {
+  if (demoMode || !game || game.role !== 'host' || !game.hostToken) return;
+  if (syncPending) {
+    syncRequested = true;
+    return;
+  }
+  syncPending = true;
+  try {
+    await updateRemoteRoom(sharedFromGame(game), game.hostToken);
+  } catch {
+    roomConnected = false;
+    updateSyncStatus('Room changes are waiting for a connection.');
+  } finally {
+    syncPending = false;
+    if (syncRequested) {
+      syncRequested = false;
+      void syncHost();
+    }
+  }
+}
+
+function updateSyncStatus(message?: string): void {
+  const status = document.querySelector<HTMLElement>('.sync-status');
+  if (!status) return;
+  status.dataset.connected = String(roomConnected);
+  const label = status.querySelector('span');
+  if (label) label.textContent = message ?? (roomConnected ? 'Room connected' : 'Reconnecting');
 }
 
 function navigate(path: string): void {
@@ -106,13 +210,13 @@ function setupPage(): string {
             <span>Opens round one with six sample players.</span>
           </div>
           <ul class="plain-facts" aria-label="Game facts">
-            <li><strong>Starter case:</strong> free</li>
-            <li><strong>Players:</strong> 4–8</li>
-            <li><strong>Storage:</strong> this device only</li>
+            <li><strong>Price:</strong> two cases are free</li>
+            <li><strong>Privacy:</strong> private clues stay on your device</li>
+            <li><strong>Offline:</strong> the demo reloads after one visit</li>
           </ul>
         </div>
         <div class="room-desk" aria-labelledby="room-heading">
-          <div class="desk-intro"><p class="specimen-number">FIELD DESK · 01</p><h2 id="room-heading">Start your room</h2><p>One friend creates the code. Everyone else joins with it.</p></div>
+          <div class="desk-intro"><p class="specimen-number">FIELD DESK · 01</p><h2 id="room-heading">Start your room</h2><p>One friend hosts. Everyone else joins the synchronized room.</p></div>
           ${saved ? `<div class="resume-strip"><span>Room ${saved.code} is saved on this device.</span><a class="button secondary" href="/play" data-link>Resume room</a></div>` : ''}
           <div class="room-actions">
             <form id="create-room" class="room-form">
@@ -126,17 +230,17 @@ function setupPage(): string {
               <select id="player-count" name="players">
                 ${[4, 5, 6, 7, 8].map((count) => `<option value="${count}" ${count === 6 ? 'selected' : ''}>${count} players</option>`).join('')}
               </select>
-              <button class="button primary" type="submit">Create room code</button>
+              <button class="button primary" type="submit" ${roomBusy ? 'disabled' : ''}>${roomBusy ? 'Creating room…' : 'Create room code'}</button>
             </form>
             <div class="pressed-divider" aria-hidden="true"><span>or</span></div>
             <form id="join-room" class="room-form">
               <h3>Join a room</h3>
               <label for="room-code">Five-character room code</label>
               <input id="room-code" name="code" minlength="5" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" required />
-              <button class="button secondary" type="submit">Open player notebooks</button>
+              <button class="button secondary" type="submit" ${roomBusy ? 'disabled' : ''}>${roomBusy ? 'Joining room…' : 'Join synchronized room'}</button>
             </form>
           </div>
-          <p class="form-error" role="alert">${formError}</p>
+          <p class="form-error" role="alert" aria-live="assertive">${formError}</p>
         </div>
       </section>
 
@@ -154,13 +258,13 @@ function setupPage(): string {
         <div><p class="eyebrow">Private by design</p><h2 id="privacy-heading">Your room stays with your group</h2></div>
         <ul>
           <li>No account or public matchmaking.</li>
-          <li>No voice, video, or accusations are uploaded.</li>
-          <li>No computer decides whether your reasoning is good.</li>
+          <li>Room timing is deleted from the server within six hours.</li>
+          <li>Private clues and accusations never leave your device.</li>
         </ul>
       </section>
 
       <section class="paid" aria-labelledby="paid-heading">
-        <div><p class="eyebrow">Additional case</p><h2 id="paid-heading">Two handcrafted cases are free to play</h2><p>Choose The Glasshouse Lantern or The Orchid Ledger when you create a room. No checkout or license is required.</p></div>
+        <div><p class="eyebrow">Case availability</p><h2 id="paid-heading">Two handcrafted cases are free to play</h2><p>Choose The Glasshouse Lantern or The Orchid Ledger. Paid cases are unavailable until product checkout exists.</p></div>
         <div class="price-block availability"><strong>Free</strong><span>Both cases are ready now.</span></div>
         <p class="legal-line">No payment is taken on this site. See the <a href="/terms" data-link>terms</a> for game use.</p>
       </section>
@@ -194,28 +298,28 @@ function gameView(rootSample = false): string {
       <${headingTag} tabindex="-1">Choose your private notebook</${headingTag}>
       <p>${mystery.premise}</p>
       <div class="code-card"><span>Room code</span><strong>${game.code}</strong><button type="button" class="text-button" data-action="copy-code">Copy room link</button></div>
+      ${!demoMode ? `<p class="sync-status" data-connected="${roomConnected}" role="status"><i aria-hidden="true"></i><span>${roomConnected ? 'Room connected' : 'Connecting room'}</span></p>` : ''}
       <h2>Pick one notebook each</h2>
       <div class="seat-grid">${seatOptions}</div>
       <p class="help-text">Say your number aloud so no one opens the same notebook.</p>
-      <button type="button" class="button primary" data-action="next-round">Open round one</button>
+      ${game.role === 'host' || demoMode ? '<button type="button" class="button primary" data-action="next-round">Start round one</button>' : '<p class="host-wait">Choose a notebook. The first clue opens when the host starts.</p>'}
     </section>`;
   } else if (game.phase === 'clue') {
     const round = game.round || 1;
     const clue = mystery.clues[round - 1][clueIndex(game.code, game.seat, round, mystery.clues[round - 1].length)];
     stage = `<section class="game-sheet">
       <div class="round-bar"><div><span>Room ${game.code}</span><strong>Round ${round} of 3</strong></div><div class="timer ${game.secondsLeft === 0 ? 'timer-ended' : ''}" aria-label="${formatTime(game.secondsLeft)} remaining"><span>${game.paused ? 'Paused' : game.secondsLeft === 0 ? 'Time is up' : 'Discuss'}</span><strong>${formatTime(game.secondsLeft)}</strong></div></div>
-      <div class="case-heading"><div><p class="eyebrow">${mystery.name}</p><${headingTag} tabindex="-1">Notebook ${game.seat}: ${clue.title}</${headingTag}></div><button class="sound-toggle" type="button" data-action="sound" aria-pressed="${settings.sound}">${settings.sound ? 'Sound on' : 'Sound off'}</button></div>
+      <div class="case-heading"><div><p class="eyebrow">${mystery.name}</p><${headingTag} tabindex="-1">Notebook ${game.seat}: ${clue.title}</${headingTag}></div><button class="sound-toggle" type="button" data-action="sound" aria-pressed="${settings.sound}">${settings.sound ? 'Turn sound off' : 'Turn sound on'}</button></div>
       <div class="clue-layout">
         ${specimen(clue)}
         <div class="clue-copy"><p class="clue-main">${clue.text}</p><p>${clue.detail}</p><div class="read-note"><strong>Read both lines aloud.</strong><span>Then compare what each notebook shows.</span></div></div>
       </div>
       <div class="game-controls">
-        <button class="button secondary" type="button" data-action="pause">${game.paused ? 'Resume timer' : 'Pause timer'}</button>
-        <button class="button primary" type="button" data-action="next-round">${round < 3 ? `Open round ${round + 1}` : game.role === 'host' ? 'Make group accusation' : 'Open group reveal'}</button>
+        ${game.role === 'host' || demoMode ? `<button class="button secondary" type="button" data-action="pause">${game.paused ? 'Resume timer' : 'Pause timer'}</button><button class="button primary" type="button" data-action="next-round">${round < 3 ? `Open round ${round + 1}` : 'Make group accusation'}</button>` : '<p class="host-wait">The host controls the timer and opens the next round.</p>'}
       </div>
     </section>`;
   } else if (game.phase === 'accuse') {
-    stage = `<section class="accusation-sheet paper-panel">
+    stage = game.role === 'host' || demoMode ? `<section class="accusation-sheet paper-panel">
       <p class="specimen-number">FINAL ENTRY · ROOM ${game.code}</p>
       <${headingTag} tabindex="-1">Record one group accusation</${headingTag}>
       <p>Choose after every player has shared all three clues.</p>
@@ -225,7 +329,7 @@ function gameView(rootSample = false): string {
         </fieldset>
         <button class="button primary" type="submit">Lock accusation and reveal</button>
       </form>
-    </section>`;
+    </section>` : `<section class="waiting-sheet paper-panel"><p class="specimen-number">FINAL ENTRY · ROOM ${game.code}</p><${headingTag} tabindex="-1">The host is choosing the accusation</${headingTag}><p>Keep this page open. The answer will appear here for everyone.</p><p class="sync-status" data-connected="${roomConnected}" role="status"><i aria-hidden="true"></i><span>${roomConnected ? 'Room connected' : 'Reconnecting'}</span></p></section>`;
   } else {
     const accused = mystery.suspects.find((suspect) => suspect.id === game?.accusation);
     const correct = game.accusation ? game.accusation === mystery.answer : null;
@@ -243,26 +347,29 @@ function gameView(rootSample = false): string {
 
   const introduction = rootSample ? `<section class="root-intro paper-panel">
       <div><p class="eyebrow">A browser game for 4–8 players</p><h1 tabindex="-1">Solve a mystery with your friends</h1><p>Compare private clues on a call and make one group accusation.</p></div>
-      <div class="root-actions"><a class="button primary" href="/demo" data-link>Try it with sample data</a><span>Round one is ready below.</span><a class="text-button" href="/setup" data-link>Start a private room</a></div>
+      <div class="root-actions"><a class="button primary" href="/demo" data-link>Try it with sample data</a><span>Round one opens with one click.</span><a class="text-button" href="/setup" data-link>Start a synchronized room</a></div>
+      <ul class="root-facts" aria-label="Game facts"><li><strong>Price:</strong> two free cases</li><li><strong>Privacy:</strong> private clues stay local</li><li><strong>Offline:</strong> demo reloads after one visit</li></ul>
     </section>` : '';
+  const homeSections = rootSample ? `<section class="root-how" aria-labelledby="root-how-title"><h2 id="root-how-title">How the game works</h2><ol><li><strong>Share the room code.</strong> Each friend chooses a private notebook.</li><li><strong>Compare three clues.</strong> The host opens each round for everyone.</li><li><strong>Make one accusation.</strong> The answer appears on every joined screen.</li></ol></section><section class="root-limits" aria-labelledby="root-limits-title"><h2 id="root-limits-title">What the game stores</h2><p>The demo stays on your device. Real rooms send only the case, timer, and round to our room server.</p><p>Private clues and accusations stay in your browser. Server room state is deleted within six hours.</p></section><section class="root-cases" aria-labelledby="root-cases-title"><h2 id="root-cases-title">Two cases are free</h2><p>The Glasshouse Lantern and The Orchid Ledger need no checkout or license.</p><a class="button secondary" href="/setup" data-link>Start a synchronized room</a></section>` : '';
   return shell(`<main id="main" class="game-main ${rootSample ? 'root-game' : ''}">
     <div class="game-backdrop" aria-hidden="true"></div>
     ${introduction}
     ${stage}
     <aside class="case-tab"><span>${mystery.name}</span><button type="button" data-action="leave-room">Leave room</button></aside>
+    ${homeSections}
   </main>`);
 }
 
 function privacyPage(): string {
-  return shell(`<main id="main" class="simple-page paper-panel"><p class="eyebrow">Privacy</p><h1 tabindex="-1">Your room data stays on your device</h1><p>Room Code Mystery does not require an account. It does not send room codes, notebook choices, timers, or accusations to us.</p><h2>Data stored by your browser</h2><p>Your current room and sound setting use local storage. Demo data uses a separate <code>demo:</code> namespace. Resetting the demo removes that sample state.</p><h2>What we do not collect</h2><p>The game has no advertising, third-party analytics, public rooms, voice recording, or video recording.</p><p>Questions can be sent to <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a>.</p></main>`);
+  return shell(`<main id="main" class="simple-page paper-panel"><p class="eyebrow">Privacy</p><h1 tabindex="-1">See what a room stores</h1><p>Room Code Mystery does not require an account. Real rooms send their code, case, player count, round, and timer to our product server.</p><h2>Data stored by your browser</h2><p>Your notebook number, private clues, accusation, and sound setting stay in browser storage. Demo data uses a separate <code>demo:</code> namespace and never contacts the room server.</p><h2>Short-lived room data</h2><p>Shared room state uses product-owned SQLite storage. It is deleted within six hours of the last host action. Accusations are never sent or stored there.</p><h2>What we do not collect</h2><p>The game has no accounts, advertising, analytics, public matchmaking, voice recording, video recording, or automated judging.</p><p>Questions can be sent to <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a>.</p></main>`);
 }
 
 function termsPage(): string {
-  return shell(`<main id="main" class="simple-page paper-panel"><p class="eyebrow">Terms</p><h1 tabindex="-1">Play fairly and share the clues</h1><p>Room Code Mystery is a browser game for personal group play. You may share a room code with people in your own gathering.</p><h2>Free cases</h2><p>The Glasshouse Lantern and The Orchid Ledger are free to play. No checkout, payment, or license is required.</p><h2>Fair use</h2><p>Do not republish the case text, sell room access, or use the service to harm others. The game is provided as available without a promise of uninterrupted access.</p><p>These terms were last updated on September 2, 2026.</p></main>`);
+  return shell(`<main id="main" class="simple-page paper-panel"><p class="eyebrow">Terms</p><h1 tabindex="-1">Play fairly and share the clues</h1><p>Room Code Mystery is a browser game for personal group play. You may share a room code with people in your gathering.</p><h2>Free cases</h2><p>The Glasshouse Lantern and The Orchid Ledger are free. Paid cases and checkout are unavailable.</p><h2>Room lifetime</h2><p>A synchronized room can end after six hours without host activity. Keep your call open while you play.</p><h2>Fair use</h2><p>Do not republish the case text, sell room access, or use the service to harm others.</p><p>These terms were last updated on September 2, 2026.</p></main>`);
 }
 
 function notFoundPage(): string {
-  return shell(`<main id="main" class="simple-page missing-page"><p class="specimen-number">SPECIMEN NOT FOUND</p><h1 tabindex="-1">This page is not in the notebook</h1><p>The address may be old or incomplete.</p><a class="button primary" href="/" data-link>Return to the game</a></main>`);
+  return shell(`<main id="main" class="simple-page missing-page"><h1 tabindex="-1">Page not found</h1><p>The address may be old or incomplete.</p><a class="button primary" href="/" data-link>Return to the game</a></main>`);
 }
 
 function render(focusHeading = false): void {
@@ -277,8 +384,27 @@ function render(focusHeading = false): void {
     'not-found': 'Page not found — Room Code Mystery',
   };
   document.title = titles[route];
+  const descriptions = {
+    home: 'Play a three-round browser mystery with 4–8 friends using synchronized room codes and private clues.',
+    setup: 'Create or join a synchronized Room Code Mystery game for 4–8 friends.',
+    play: 'Open your private notebook and follow the host through three evidence rounds.',
+    demo: 'Try Room Code Mystery with isolated sample data. Nothing in the demo is saved to a real room.',
+    privacy: 'See what Room Code Mystery stores in your browser and its short-lived room server.',
+    terms: 'Read the terms for playing and sharing Room Code Mystery.',
+    'not-found': 'The requested Room Code Mystery page was not found.',
+  };
+  const canonicalPath = route === 'not-found' ? '/404.html' : location.pathname;
+  const canonical = `https://room-code-mystery.sociobot.in${canonicalPath}`;
+  document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute('content', descriptions[route]);
+  document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute('href', canonical);
+  document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute('content', titles[route]);
+  document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute('content', descriptions[route]);
+  document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute('content', canonical);
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute('content', titles[route]);
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute('content', descriptions[route]);
   app.innerHTML = route === 'setup' ? setupPage() : route === 'privacy' ? privacyPage() : route === 'terms' ? termsPage() : route === 'not-found' ? notFoundPage() : gameView(route === 'home');
   bindEvents();
+  if (!demoMode && game) connectRoom();
   if (focusHeading) {
     requestAnimationFrame(() => {
       const heading = document.querySelector<HTMLElement>('main h1');
@@ -303,29 +429,49 @@ function bindEvents(): void {
     });
   });
 
-  document.querySelector<HTMLFormElement>('#create-room')?.addEventListener('submit', (event) => {
+  document.querySelector<HTMLFormElement>('#create-room')?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget as HTMLFormElement);
     const caseId = String(data.get('case'));
     const players = Number(data.get('players'));
-    const mystery = caseById(caseId);
-    const code = makeRoomCode(players, mystery.paid);
-    game = createState(code, caseId, players, 'host');
-    saveState();
-    navigate('/play');
+    roomBusy = true;
+    formError = '';
+    render();
+    try {
+      const result = await createRemoteRoom(caseId, players);
+      game = gameFromShared(result.room, null, 'host', result.hostToken);
+      saveState();
+      disconnectRoom();
+      navigate('/play');
+    } catch {
+      roomBusy = false;
+      formError = 'The room could not be created. Check your connection and try again.';
+      render();
+    }
   });
 
-  document.querySelector<HTMLFormElement>('#join-room')?.addEventListener('submit', (event) => {
+  document.querySelector<HTMLFormElement>('#join-room')?.addEventListener('submit', async (event) => {
     event.preventDefault();
-    const parsed = parseRoomCode(String(new FormData(event.currentTarget as HTMLFormElement).get('code') ?? ''));
-    if (!parsed) {
+    const code = String(new FormData(event.currentTarget as HTMLFormElement).get('code') ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!/^[A-HJ-NP-Z2-9]{5}$/.test(code)) {
       formError = 'That code is not valid. Ask the host for all five characters and try again.';
       render();
       return;
     }
-    game = createState(parsed.code, parsed.caseId, parsed.players, 'player');
-    saveState();
-    navigate('/play');
+    roomBusy = true;
+    formError = '';
+    render();
+    try {
+      const result = await joinRemoteRoom(code);
+      game = gameFromShared(result.room, null, 'player');
+      saveState();
+      disconnectRoom();
+      navigate('/play');
+    } catch (error) {
+      roomBusy = false;
+      formError = error instanceof Error ? error.message : 'That room could not be opened. Ask the host to check the code.';
+      render();
+    }
   });
 
   document.querySelector<HTMLFormElement>('#accusation-form')?.addEventListener('submit', (event) => {
@@ -335,6 +481,7 @@ function bindEvents(): void {
     if (!suspect) return;
     game = { ...game, accusation: suspect, phase: 'reveal' };
     saveState();
+    void syncHost();
     playChime();
     render(true);
   });
@@ -369,11 +516,13 @@ function bindEvents(): void {
     } else if (action === 'next-round' && game) {
       game = nextRound(game);
       saveState();
+      void syncHost();
       playChime();
       render(true);
     } else if (action === 'pause' && game) {
       game = { ...game, paused: !game.paused };
       saveState();
+      void syncHost();
       updateTimerDom();
     } else if (action === 'sound') {
       settings.sound = !settings.sound;
@@ -382,10 +531,22 @@ function bindEvents(): void {
       render();
     } else if (action === 'play-again' && game) {
       const nextCase = game.caseId === cases[0].id ? cases[1] : cases[0];
-      game = createState(makeRoomCode(game.players, nextCase.paid), nextCase.id, game.players, 'host');
-      saveState();
-      render(true);
+      if (demoMode) {
+        game = createState(makeRoomCode(game.players, nextCase.paid), nextCase.id, game.players, 'host');
+        saveState();
+        render(true);
+      } else {
+        roomBusy = true;
+        void createRemoteRoom(nextCase.id, game.players).then((result) => {
+          game = gameFromShared(result.room, null, 'host', result.hostToken);
+          saveState();
+          disconnectRoom();
+          render(true);
+          connectRoom();
+        }).catch(() => updateSyncStatus('A new room could not be created.'));
+      }
     } else if ((action === 'new-room' || action === 'leave-room') && game) {
+      disconnectRoom();
       game = null;
       localStorage.removeItem(demoMode ? DEMO_STATE_KEY : REAL_STATE_KEY);
       if (demoMode) {
@@ -441,6 +602,7 @@ function timerLoop(now: number): void {
       game = { ...game, secondsLeft: Math.max(0, game.secondsLeft - ticks) };
       if (game.secondsLeft === 0) game.paused = true;
       saveState();
+      if (game.role === 'host' && !demoMode) void syncHost();
       updateTimerDom();
     }
   }
@@ -451,6 +613,7 @@ addEventListener('popstate', () => {
   const wasDemo = demoMode;
   demoMode = location.pathname === '/' || location.pathname === '/demo';
   if (wasDemo && !demoMode) localStorage.removeItem(DEMO_STATE_KEY);
+  if (demoMode) disconnectRoom();
   game = readState();
   render(true);
 });
@@ -458,19 +621,25 @@ addEventListener('online', () => { online = true; render(); });
 addEventListener('offline', () => { online = false; render(); });
 document.addEventListener('visibilitychange', () => { lastFrame = performance.now(); });
 
-const sharedCode = new URLSearchParams(location.search).get('room');
-if (!demoMode && sharedCode && !game) {
-  const parsed = parseRoomCode(sharedCode);
-  if (parsed) {
-    game = createState(parsed.code, parsed.caseId, parsed.players, 'player');
-    saveState();
-    history.replaceState({}, '', '/play');
-  }
-}
-
 render();
 timerFrame = requestAnimationFrame(timerLoop);
 void timerFrame;
+
+const sharedCode = new URLSearchParams(location.search).get('room');
+if (!demoMode && sharedCode) {
+  void joinRemoteRoom(sharedCode).then((result) => {
+    game = gameFromShared(result.room, null, 'player');
+    saveState();
+    history.replaceState({}, '', '/play');
+    disconnectRoom();
+    render(true);
+    connectRoom();
+  }).catch(() => {
+    formError = 'That room has ended or the shared link is wrong.';
+    history.replaceState({}, '', '/setup');
+    render(true);
+  });
+}
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   addEventListener('load', () => void navigator.serviceWorker.register('/sw.js'));

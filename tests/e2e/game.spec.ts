@@ -19,32 +19,62 @@ test('@claim:complete-case reaches the answer after three timed rounds', async (
   await expect(page.getByText('Three rounds completed')).toBeVisible();
 });
 
-test('@claim:room-code gives 4–8 players deterministic private notebooks', async ({ page }) => {
-  await page.goto('/setup');
-  await page.getByLabel('Number of players').selectOption('8');
-  await page.getByRole('button', { name: 'Create room code' }).click();
-  const code = await page.locator('.code-card strong').textContent();
-  expect(code).toMatch(/^[A-Z2-9]{5}$/);
-  await expect(page.getByRole('button', { name: 'Notebook 8' })).toBeVisible();
-  await page.getByRole('button', { name: 'Notebook 8' }).click();
-  await page.getByRole('button', { name: 'Open round one' }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Notebook 8');
+test('@claim:room-code synchronizes different private notebooks through a complete room', async ({ browser }) => {
+  const hostContext = await browser.newContext();
+  const guestContext = await browser.newContext();
+  const host = await hostContext.newPage();
+  const guest = await guestContext.newPage();
+  await host.goto('http://127.0.0.1:4173/setup');
+  await host.getByLabel('Number of players').selectOption('8');
+  await host.getByRole('button', { name: 'Create room code' }).click();
+  const code = await host.locator('.code-card strong').textContent();
+  expect(code).toMatch(/^[A-HJ-NP-Z2-9]{5}$/);
+  await expect(host.getByText('Room connected')).toBeVisible();
+  await guest.goto('http://127.0.0.1:4173/setup');
+  await guest.getByLabel('Five-character room code').fill(code!);
+  await guest.getByRole('button', { name: 'Join synchronized room' }).click();
+  await expect(guest.locator('.code-card strong')).toHaveText(code!);
+  await guest.getByRole('button', { name: 'Notebook 8' }).click();
+  await host.getByRole('button', { name: 'Notebook 1' }).click();
+  await host.getByRole('button', { name: 'Start round one' }).click();
+  await expect(guest.getByText('Round 1 of 3')).toBeVisible();
+  const hostClue = await host.locator('.clue-main').textContent();
+  const guestClue = await guest.locator('.clue-main').textContent();
+  expect(guestClue).not.toBe(hostClue);
+  await host.getByRole('button', { name: 'Open round 2' }).click();
+  await expect.poll(() => guest.evaluate(() => JSON.parse(localStorage.getItem('rcm:game') || '{}').round)).toBe(2);
+  await expect(guest.getByText('Round 2 of 3')).toBeVisible();
+  await host.getByRole('button', { name: 'Open round 3' }).click();
+  await expect(guest.getByText('Round 3 of 3')).toBeVisible();
+  await host.getByRole('button', { name: 'Make group accusation' }).click();
+  await expect(guest.getByRole('heading', { name: 'The host is choosing the accusation' })).toBeVisible();
+  await host.getByLabel(/Celia Finch/).check();
+  await host.getByRole('button', { name: 'Lock accusation and reveal' }).click();
+  await expect(guest.getByText('Shared reveal')).toBeVisible();
+  await expect(guest.getByText('Celia Finch took the item')).toBeVisible();
+  await hostContext.close();
+  await guestContext.close();
 });
 
 test('@claim:demo-sandbox resets sample state without changing real state', async ({ page }) => {
   await page.goto('/setup');
-  await page.evaluate(() => localStorage.setItem('rcm:proof', 'real-data'));
+  await page.getByRole('button', { name: 'Create room code' }).click();
+  const realState = await page.evaluate(() => localStorage.getItem('rcm:game'));
+  expect(realState).toBeTruthy();
   await page.goto('/demo');
   await page.getByRole('button', { name: 'Open round 2' }).click();
   await page.getByRole('button', { name: 'Reset demo' }).click();
   await expect(page.getByText('Round 1 of 3')).toBeVisible();
-  expect(await page.evaluate(() => localStorage.getItem('rcm:proof'))).toBe('real-data');
+  expect(await page.evaluate(() => localStorage.getItem('rcm:game'))).toBe(realState);
   expect(await page.evaluate(() => localStorage.getItem('demo:rcm:game'))).toBeTruthy();
+  await page.getByRole('button', { name: 'Start for real' }).click();
+  expect(await page.evaluate(() => localStorage.getItem('rcm:game'))).toBe(realState);
+  expect(await page.evaluate(() => localStorage.getItem('demo:rcm:game'))).toBeNull();
 });
 
-test('@claim:local-privacy keeps the complete demo flow on this origin', async ({ page }) => {
-  const origins = new Set<string>();
-  page.on('request', (request) => origins.add(new URL(request.url()).origin));
+test('@claim:local-privacy keeps all demo game values local with static GET requests only', async ({ page }) => {
+  const requests: { origin: string; method: string; body: string | null }[] = [];
+  page.on('request', (request) => requests.push({ origin: new URL(request.url()).origin, method: request.method(), body: request.postData() }));
   await page.goto('/demo');
   await page.getByRole('button', { name: 'Open round 2' }).click();
   await page.getByRole('button', { name: 'Open round 3' }).click();
@@ -52,8 +82,9 @@ test('@claim:local-privacy keeps the complete demo flow on this origin', async (
   await page.getByLabel(/Celia Finch/).check();
   await page.getByRole('button', { name: 'Lock accusation and reveal' }).click();
   await expect(page.getByText('Correct accusation')).toBeVisible();
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('demo:rcm:game') ?? '{}').accusation)).toBe('celia');
-  await expect.poll(() => [...origins]).toEqual(['http://127.0.0.1:4173']);
+  const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('demo:rcm:game') ?? '{}'));
+  expect(stored).toMatchObject({ code: 'C7K2M', seat: 1, round: 3, secondsLeft: 180, accusation: 'celia' });
+  expect(requests.every((request) => request.origin === 'http://127.0.0.1:4173' && request.method === 'GET' && request.body === null)).toBe(true);
 });
 
 test('@claim:offline-reload reloads the demo after the first visit', async ({ browser }) => {
@@ -78,19 +109,19 @@ test('service worker update activates the current cache and removes the old cach
     await registration.update();
     return caches.keys();
   });
-  expect(cacheKeys).toContain('room-code-mystery-v3');
-  expect(cacheKeys).not.toContain('room-code-mystery-v2');
+  expect(cacheKeys).toContain('room-code-mystery-v4');
+  expect(cacheKeys).not.toContain('room-code-mystery-v3');
   await context.close();
 });
 
-test('@claim:additional-case makes both authored cases free without a checkout path', async ({ page }) => {
+test('@claim:additional-case truthfully disables paid cases and keeps both authored cases free', async ({ page }) => {
   await page.goto('/setup');
   await expect(page.getByRole('heading', { name: 'Two handcrafted cases are free to play' })).toBeVisible();
-  await expect(page.getByText('No checkout or license is required.')).toBeVisible();
+  await expect(page.getByText('Paid cases are unavailable until product checkout exists.')).toBeVisible();
   await expect(page.locator('a[href*="/checkout"]')).toHaveCount(0);
   await page.getByLabel('Case', { exact: true }).selectOption('orchid-ledger');
   await page.getByRole('button', { name: 'Create room code' }).click();
-  await page.getByRole('button', { name: 'Open round one' }).click();
+  await page.getByRole('button', { name: 'Start round one' }).click();
   await expect(page.locator('.game-sheet .eyebrow')).toHaveText('The Orchid Ledger');
 });
 
@@ -149,10 +180,10 @@ test('@claim:mobile-actions 390px game keeps actions at least 44px and the next 
 
 test('@claim:settings-persist keeps the sound choice after reload', async ({ page }) => {
   await page.goto('/demo');
-  await page.getByRole('button', { name: 'Sound off' }).click();
-  await expect(page.getByRole('button', { name: 'Sound on' })).toBeVisible();
+  await page.getByRole('button', { name: 'Turn sound on' }).click();
+  await expect(page.getByRole('button', { name: 'Turn sound off' })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Sound on' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Turn sound off' })).toBeVisible();
 });
 
 test('@claim:restart resets a finished run to a new lobby', async ({ page }) => {
@@ -164,7 +195,7 @@ test('@claim:restart resets a finished run to a new lobby', async ({ page }) => 
   await page.getByRole('button', { name: 'Lock accusation and reveal' }).click();
   await page.getByRole('button', { name: 'Start a second case' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Choose your private notebook' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Open round one' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start round one' })).toBeVisible();
 });
 
 test('@claim:render-rate keeps the game screen above 55 fps in the mobile browser check', async ({ page }) => {
@@ -190,6 +221,9 @@ test('@claim:cold-root-game shows and plays an active sample round before room s
   await expect(page.getByText('Round 1 of 3')).toBeVisible();
   await expect(page.getByLabel(/3:00 remaining/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Open round 2' })).toBeVisible();
+  await expect(page.getByText('Price: two free cases')).toBeVisible();
+  await expect(page.getByText('Privacy: private clues stay local')).toBeVisible();
+  await expect(page.getByText('Offline: demo reloads after one visit')).toBeVisible();
   await expect(page.locator('.room-desk')).toHaveCount(0);
   await page.getByRole('button', { name: 'Open round 2' }).click();
   await expect(page.getByText('Round 2 of 3')).toBeVisible();
@@ -197,7 +231,7 @@ test('@claim:cold-root-game shows and plays an active sample round before room s
 
 test('@claim:link-crawl follows every site link and reaches the live factory home', async ({ page, request }) => {
   const checked = new Set<string>();
-  for (const path of ['/', '/demo', '/setup', '/privacy', '/terms']) {
+  for (const path of ['/', '/demo', '/setup', '/play', '/privacy', '/terms']) {
     await page.goto(path);
     const links = await page.locator('a[href]').evaluateAll((anchors) => anchors.map((anchor) => (anchor as HTMLAnchorElement).href));
     for (const href of links) {
@@ -209,6 +243,84 @@ test('@claim:link-crawl follows every site link and reaches the live factory hom
     }
   }
   expect(checked).toContain('https://hello-factory.sociobot.in/');
+});
+
+test('@claim:route-metadata gives each route its own metadata, focus, and legal links', async ({ page }) => {
+  const routes = [
+    ['/', 'Room Code Mystery — Play a three-round mystery'],
+    ['/demo', 'Demo — Room Code Mystery'],
+    ['/setup', 'Start a room — Room Code Mystery'],
+    ['/play', 'Your room — Room Code Mystery'],
+    ['/privacy', 'Privacy — Room Code Mystery'],
+    ['/terms', 'Terms — Room Code Mystery'],
+  ];
+  for (const [path, title] of routes) {
+    await page.goto(path);
+    await expect(page).toHaveTitle(title);
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', `https://room-code-mystery.sociobot.in${path}`);
+    await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /.+/);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content', title);
+    await expect(page.locator('footer a[href="/privacy"]')).toHaveCount(1);
+    await expect(page.locator('footer a[href="/terms"]')).toHaveCount(1);
+  }
+  await page.goto('/setup');
+  await page.getByRole('link', { name: 'Privacy', exact: true }).first().click();
+  await expect(page).toHaveURL(/\/privacy$/);
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/setup$/);
+  await expect(page.getByRole('heading', { level: 1 })).toBeFocused();
+});
+
+test('@claim:reduced-motion removes the paper movement', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/demo');
+  const motion = await page.locator('.game-sheet').evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { duration: style.animationDuration, iterations: style.animationIterationCount };
+  });
+  expect(Number.parseFloat(motion.duration)).toBeLessThanOrEqual(0.01);
+  expect(Number(motion.iterations)).toBeLessThanOrEqual(1);
+});
+
+test('@claim:no-account-media requires no account, capture, or automated judgment', async ({ page }) => {
+  const mediaCalls: string[] = [];
+  await page.exposeFunction('recordMediaCall', (kind: string) => mediaCalls.push(kind));
+  await page.addInitScript(() => {
+    const media = navigator.mediaDevices;
+    if (media?.getUserMedia) {
+      media.getUserMedia = async () => {
+        await (window as typeof window & { recordMediaCall: (kind: string) => Promise<void> }).recordMediaCall('getUserMedia');
+        throw new Error('blocked in test');
+      };
+    }
+  });
+  const requests: string[] = [];
+  page.on('request', (request) => requests.push(request.url()));
+  await page.goto('/setup');
+  await expect(page.locator('input[type="email"], input[type="password"], [href*="login"], [href*="signup"]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Create room code' }).click();
+  await page.getByRole('button', { name: 'Start round one' }).click();
+  await page.getByRole('button', { name: 'Open round 2' }).click();
+  await page.getByRole('button', { name: 'Open round 3' }).click();
+  await page.getByRole('button', { name: 'Make group accusation' }).click();
+  await page.getByLabel(/Celia Finch/).check();
+  await page.getByRole('button', { name: 'Lock accusation and reveal' }).click();
+  expect(mediaCalls).toEqual([]);
+  expect(requests.some((url) => /openai|login|signup|analytics/i.test(url))).toBe(false);
+});
+
+test('@claim:room-expiry assigns each synchronized room a six-hour expiry', async ({ page }) => {
+  await page.goto('/setup');
+  const expiry = await page.evaluate(async () => {
+    const response = await fetch('http://127.0.0.1:8787/rooms', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ caseId: 'glasshouse-lantern', players: 4 }),
+    });
+    return response.json();
+  });
+  expect(expiry.room.expiresAt - expiry.room.updatedAt).toBe(6 * 60 * 60 * 1000);
 });
 
 test('landing and mobile game have no serious accessibility findings', async ({ page }) => {
@@ -241,15 +353,15 @@ test('landing and mobile game have no serious accessibility findings', async ({ 
 test('invalid codes explain how to recover', async ({ page }) => {
   await page.goto('/setup');
   await page.getByLabel('Five-character room code').fill('OOOOO');
-  await page.getByRole('button', { name: 'Open player notebooks' }).click();
+  await page.getByRole('button', { name: 'Join synchronized room' }).click();
   await expect(page.getByRole('alert')).toContainText('Ask the host for all five characters');
 });
 
-test('@claim:not-found-status every route loads and unknown routes return 404', async ({ page }) => {
+test('@claim:not-found-status every route loads and unknown routes return a complete 404 page', async ({ page }) => {
   const errors: string[] = [];
   page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
   page.on('pageerror', (error) => errors.push(error.message));
-  for (const path of ['/', '/demo', '/setup', '/privacy', '/terms']) {
+  for (const path of ['/', '/demo', '/setup', '/play', '/privacy', '/terms']) {
     const response = await page.goto(path);
     expect(response?.status()).toBeLessThan(400);
     await expect(page.locator('h1')).toHaveCount(1);
@@ -258,6 +370,9 @@ test('@claim:not-found-status every route loads and unknown routes return 404', 
   expect(errors).toEqual([]);
   const missingResponse = await page.goto('/missing-page');
   expect(missingResponse?.status()).toBe(404);
-  await expect(page.getByRole('heading', { level: 1, name: 'This page is not in the notebook' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
+  await expect(page.locator('header')).toBeVisible();
+  await expect(page.locator('footer')).toBeVisible();
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://room-code-mystery.sociobot.in/404.html');
   expect(errors.filter((message) => !message.includes('the server responded with a status of 404'))).toEqual([]);
 });

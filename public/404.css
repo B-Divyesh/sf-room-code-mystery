@@ -1,15 +1,19 @@
-body {
-  box-sizing: border-box;
-  display: grid;
-  min-height: 100vh;
-  margin: 0;
-  padding: 24px;
-  place-items: center;
-  color: #f3edda;
-  background: #17251f;
-  font: 17px/1.5 system-ui, sans-serif;
-}
-main { max-width: 620px; }
-h1 { font: 700 clamp(42px, 8vw, 72px)/1.05 Georgia, serif; }
-a { display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; padding: 13px 20px; color: #fffaf0; background: #873420; font-weight: 700; }
+* { box-sizing: border-box; }
+html { color-scheme: dark; }
+body { min-width: 320px; min-height: 100vh; margin: 0; color: #f3edda; background: #17251f; font: 17px/1.5 system-ui, sans-serif; }
+a { color: inherit; text-underline-offset: .2em; }
 a:focus-visible { outline: 3px solid #d7b665; outline-offset: 3px; }
+.skip-link { position: fixed; z-index: 3; top: 8px; left: 8px; padding: 12px; color: #19241f; background: #fffaf0; transform: translateY(-150%); }
+.skip-link:focus { transform: none; }
+header { display: flex; min-height: 72px; align-items: center; justify-content: space-between; gap: 24px; padding: 12px clamp(20px,5vw,72px); border-bottom: 1px solid #68746c; background: #0f1915; }
+header nav, footer nav { display: flex; flex-wrap: wrap; gap: 20px; }
+header a, footer a { display: inline-flex; min-height: 44px; align-items: center; }
+.wordmark { gap: 10px; font: 700 19px Georgia, serif; text-decoration: none; }
+.wordmark span { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; color: #0f1915; background: #d7b665; }
+main { width: min(900px,calc(100% - 40px)); min-height: 62vh; margin: 48px auto; padding: clamp(32px,7vw,76px); color: #19241f; background: #f3edda; clip-path: polygon(0 0,calc(100% - 22px) 0,100% 22px,100% 100%,0 100%); }
+h1 { max-width: 14ch; margin: 0 0 24px; font: 700 clamp(42px,8vw,72px)/1.05 Georgia,serif; }
+.button { display: inline-flex; min-width: 44px; min-height: 48px; align-items: center; margin-top: 16px; padding: 10px 20px; color: #fffaf0; background: #873420; font-weight: 700; text-decoration: none; }
+footer { display: grid; grid-template-columns: 1fr auto; gap: 16px 32px; padding: 40px clamp(24px,7vw,110px); border-top: 1px solid #68746c; background: #0f1915; font-size: 14px; }
+footer p { margin: 4px 0 0; }
+footer > p { grid-column: 1/-1; color: #b9c1ba; }
+@media (max-width:600px) { header { align-items:flex-start; } header nav { gap:10px; font-size:13px; } header nav a:nth-child(2) { display:none; } footer { grid-template-columns:1fr; } footer > p { grid-column:auto; } }

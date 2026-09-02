@@ -5,6 +5,6 @@
   "artifact_class": "browser-game",
   "user": "Remote friend groups who want a warm, low-stakes 20-minute social deduction game with a room code, no pack purchase, and no AI-generated judgments.",
   "smallest_useful_product": "A 4–8 player browser mystery told in three timed evidence rounds. Each player receives different visual clues; the group submits one accusation before a compact reveal. One host shares a code, remote players use personal views.",
-  "monetization": "one-time — sell additional handcrafted cases to the host, with the starter case fully playable free.",
+  "monetization": "Disabled for this release by the polish-1 controller instruction: both authored cases are free, and no paid promise is shown until product-scoped Sociobot checkout exists.",
   "constraints": "Original cases and art; no retained user accusations; no public matchmaking, voice, video, permanent accounts, or automated judging."
 }

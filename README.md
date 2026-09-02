@@ -1,27 +1,33 @@
 # Room Code Mystery
 
-Solve a three-round browser mystery with 4–8 friends and one shared room code. Each player opens a different private notebook, reads one clue per round, and helps the host make one accusation.
+Solve a three-round browser mystery with 4–8 friends and one synchronized room code. Each player reads a different private clue before the host records one accusation.
 
-The Glasshouse Lantern and The Orchid Ledger are fully playable for free. The game has no checkout, accounts, public matchmaking, voice, video, or automated judgments.
+The Glasshouse Lantern and The Orchid Ledger are free. Paid cases remain unavailable until product checkout exists. Playing needs no account, voice, video, or automated judgment.
 
 Live site: <https://room-code-mystery.sociobot.in>
 
-## Try the sample room
+## Try the demo
 
-Open `/` or `/demo` to start round one with room `C7K2M`, six player notebooks, and the free case. The root route is an active game screen for a quick first play. The banner can reset the sample or leave for a real room.
+Open `/demo` to load room `C7K2M`, six notebooks, and round one. The banner resets the demo or returns to a real room.
 
-Demo state uses `demo:rcm:game`. Real state uses `rcm:game`. Resetting or leaving the demo removes only its sample state. See [`.factory/demo.md`](.factory/demo.md) for the verifier flow.
+Demo state uses `demo:rcm:game`. Real browser state uses `rcm:game`. Leaving the demo removes only its sample state. See [`.factory/demo.md`](.factory/demo.md).
 
 ## Run locally
 
-Requirements: Node.js 20 or newer and npm.
+Use Node.js 20 or newer.
 
 ```sh
 npm install
+npm run realtime
+```
+
+In another terminal:
+
+```sh
 npm run dev
 ```
 
-Vite prints the local URL. Open `/demo` for the seeded game.
+Open `/demo` for local sample data. Open `/setup` to test synchronized rooms.
 
 ## Test and build
 
@@ -30,38 +36,45 @@ npm test
 npm run build
 ```
 
-`npm test` runs deterministic core tests and Chromium browser tests. Claim tests use the tags recorded in [`.factory/claims.json`](.factory/claims.json). The production build writes `index.html` and all static assets to `dist/`.
+Tests cover the deterministic core, complete game, two-browser synchronization, demo isolation, offline reload, metadata, mobile actions, and accessibility. Every product claim has one tagged browser test in [`.factory/claims.json`](.factory/claims.json).
 
-An opened room reloads offline after its first visit. The service worker caches the app shell and visited assets. Room progress and the sound choice persist in browser local storage.
+The production build writes the static site to `dist/`. Initial JavaScript remains below the 200 KB budget.
 
 ## How room codes work
 
-The five-character room code deterministically identifies the case, player count, and clue arrangement. It does not connect browsers. Friends stay together on their existing call, advance when the host says so, and read their private clues aloud. This matches the static deployment without sending room activity to a server.
+The host creates a five-character code. Friends enter it to join the same case and round. The host controls the timer, advances rounds, and opens the reveal for everyone.
 
-Choose either free case at `/setup`. The five-character code records the chosen case and player count locally. The site has no checkout or payment provider.
+Private notebook numbers and accusations stay in each browser. Shared case, round, and timer state use product-owned SQLite storage. A room expires six hours after the last host action.
+
+The demo reloads offline after its first visit. The sound choice persists on the device.
 
 ## Deployment
 
-The deployment type is static. Use this exact command:
+The main game remains a static Vite site. Its product-owned realtime companion runs from `Dockerfile.realtime` with `deploy.data_dir=/data`.
+
+Build the site with:
 
 ```sh
-npm ci && npm run build
+VITE_REALTIME_URL=https://<product-room-service> npm run build
 ```
 
-Publish `dist/` as the site root. `staticwebapp.config.json` supplies SPA fallback, security headers, and cache-safe content types. The factory owns DNS and infrastructure.
+Publish `dist/` as the static site root. The config keeps deep links working, adds browser security rules, and serves each file with the correct type.
 
 ## Privacy and accessibility
 
-Room codes, notebook choices, timers, and accusations stay on the device. `/privacy` and `/terms` contain the complete product text.
+The game has no accounts, public matchmaking, analytics, media capture, or automated judging. Demo actions make static requests only. Real rooms send only shared play state to the product server.
 
-The interface includes stable keyboard focus, 44 px touch targets, one heading and main landmark per route, reduced motion, mobile layouts, and explicit timer controls. Tests cover the full game, offline reload, local privacy, mobile actions, and serious accessibility findings.
+Keyboard focus stays visible, and timer updates do not move it. Actions are at least 44 pixels at 390 pixels wide. Each route has one main heading and one main content area. Reduced motion is supported.
+
+Read the complete [privacy notice](https://room-code-mystery.sociobot.in/privacy) and [terms](https://room-code-mystery.sociobot.in/terms).
 
 ## Project notes
 
 - [Visual thesis and asset provenance](.factory/design.md)
 - [Demo contract](.factory/demo.md)
-- [Claims and their tests](.factory/claims.json)
+- [Claims and tests](.factory/claims.json)
 - [Copy audit](.factory/copy-audit.md)
+- [Repair mapping](.factory/polish-1.md)
 - [Build handoff](.factory/handoff.md)
 
-Original generated art is disclosed in the site footer and documented in the visual thesis. Source code is MIT licensed; see [`LICENSE`](LICENSE).
+Original generated art is disclosed in the footer and documented in the visual thesis. Source code is MIT licensed.
