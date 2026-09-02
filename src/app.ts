@@ -114,7 +114,7 @@ function shell(content: string): string {
     ${content}
     <footer>
       <div><strong>Room Code Mystery</strong><p>Three evidence rounds for 4–8 friends.</p></div>
-      <div class="footer-links"><a href="/privacy" data-link>Privacy</a><a href="/terms" data-link>Terms</a><a href="https://www.sociobot.in" rel="noreferrer">Built by Param Factory</a></div>
+      <div class="footer-links"><a href="/privacy" data-link>Privacy</a><a href="/terms" data-link>Terms</a><a href="https://www.sociobot.in" rel="noreferrer">Built by Param Factory ↗</a></div>
       <p class="build-note">v1.0 · Original generated field-guide art</p>
     </footer>
     <div class="route-announcer sr-only" aria-live="polite"></div>`;
@@ -193,7 +193,7 @@ function landing(): string {
 
       <section class="paid" aria-labelledby="paid-heading">
         <div><p class="eyebrow">Additional case</p><h2 id="paid-heading">Add The Orchid Ledger</h2><p>Get a second handcrafted case with 24 new clues and a new solution.</p></div>
-        <div class="price-block"><strong>$6</strong><span>one-time purchase</span><a class="button primary" href="${checkoutUrl}">Buy the second case</a></div>
+        <div class="price-block"><strong>$6</strong><span>one-time purchase</span><a class="button primary" href="${checkoutUrl}">Buy at hosted checkout</a></div>
         <form id="restore-license" class="restore-form">
           <label for="license-token">Have a license? Paste it here</label>
           <div><input id="license-token" name="license" type="text" autocomplete="off" required /><button class="button secondary" type="submit">Verify license</button></div>
@@ -325,7 +325,9 @@ function bindEvents(): void {
       if (link.origin !== location.origin || event.metaKey || event.ctrlKey) return;
       event.preventDefault();
       const target = new URL(link.href);
+      const wasDemo = demoMode;
       demoMode = target.pathname === '/demo';
+      if (wasDemo && !demoMode) localStorage.removeItem(DEMO_STATE_KEY);
       if (demoMode) game = readState();
       navigate(target.pathname);
     });
@@ -477,7 +479,9 @@ function timerLoop(now: number): void {
 }
 
 addEventListener('popstate', () => {
+  const wasDemo = demoMode;
   demoMode = location.pathname === '/demo';
+  if (wasDemo && !demoMode) localStorage.removeItem(DEMO_STATE_KEY);
   game = readState();
   render(true);
 });

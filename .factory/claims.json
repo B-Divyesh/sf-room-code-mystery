@@ -1,0 +1,65 @@
+[
+  {
+    "id": "complete-case",
+    "claim": "A case is designed for 20 minutes and has three three-minute evidence rounds.",
+    "where": "landing page, game, README",
+    "test": "npm test -- --grep @claim:complete-case",
+    "sandbox": "fresh browser context at /demo; advance all rounds, accuse the correct suspect, and assert the answer screen"
+  },
+  {
+    "id": "room-code",
+    "claim": "One room code gives 4–8 players different private notebooks.",
+    "where": "landing page, game, README",
+    "test": "npm test -- --grep @claim:room-code",
+    "sandbox": "fresh browser context; create an eight-player room and open notebook eight"
+  },
+  {
+    "id": "demo-sandbox",
+    "claim": "Demo sample data does not change real room data and can be reset.",
+    "where": "demo banner, README",
+    "test": "npm test -- --grep @claim:demo-sandbox",
+    "sandbox": "fresh browser context with a real-namespace marker; change and reset demo state"
+  },
+  {
+    "id": "local-privacy",
+    "claim": "Room codes, notebook choices, timers, and accusations stay on the device.",
+    "where": "landing privacy section, privacy page, README",
+    "test": "npm test -- --grep @claim:local-privacy",
+    "sandbox": "fresh browser context at /demo; record requests through two rounds and assert same-origin only"
+  },
+  {
+    "id": "offline-reload",
+    "claim": "An opened room reloads offline after the first visit.",
+    "where": "offline state, README",
+    "test": "npm test -- --grep @claim:offline-reload",
+    "sandbox": "dedicated browser context; load /demo, wait for its service worker, set offline, reload, and assert round one"
+  },
+  {
+    "id": "paid-case",
+    "claim": "The $6 one-time license adds a second case with 24 new clues.",
+    "where": "paid section, terms, README",
+    "test": "npm test -- --grep @claim:paid-case",
+    "sandbox": "fresh browser context with the license verification response stubbed valid; create and open the paid case"
+  },
+  {
+    "id": "settings-persist",
+    "claim": "The sound choice persists on the device.",
+    "where": "game settings, README",
+    "test": "npm test -- --grep @claim:settings-persist",
+    "sandbox": "fresh browser context at /demo; enable sound, reload, and assert it remains enabled"
+  },
+  {
+    "id": "restart",
+    "claim": "A finished case can restart at a new room lobby.",
+    "where": "reveal screen",
+    "test": "npm test -- --grep @claim:restart",
+    "sandbox": "fresh browser context at /demo; finish the case, start a second case, and assert a reset lobby"
+  },
+  {
+    "id": "render-rate",
+    "claim": "The mobile game screen renders at 55 frames per second or better in the browser check.",
+    "where": "handoff",
+    "test": "npm test -- --grep @claim:render-rate",
+    "sandbox": "390 by 844 Chromium viewport at /demo; sample 90 requestAnimationFrame intervals after initial paint"
+  }
+]
