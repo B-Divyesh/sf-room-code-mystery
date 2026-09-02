@@ -1,8 +1,8 @@
 # Room Code Mystery
 
-Solve a three-round browser mystery with 4–8 friends and one shared room code. A game is designed for one 20-minute video call. Each player opens a different private notebook, reads one clue per round, and helps the host make one accusation.
+Solve a three-round browser mystery with 4–8 friends and one shared room code. Each player opens a different private notebook, reads one clue per round, and helps the host make one accusation.
 
-The Glasshouse Lantern is fully playable for free. A $6 one-time host license adds The Orchid Ledger, a second handcrafted case with 24 new clues. The game has no accounts, public matchmaking, voice, video, or automated judgments.
+The Glasshouse Lantern is fully playable for free. New checkout for The Orchid Ledger is unavailable. Existing license holders can restore access to its 24 clues. The game has no accounts, public matchmaking, voice, video, or automated judgments.
 
 Live site: <https://room-code-mystery.sociobot.in>
 
@@ -38,7 +38,7 @@ An opened room reloads offline after its first visit. The service worker caches 
 
 The five-character room code deterministically identifies the case, player count, and clue arrangement. It does not connect browsers. Friends stay together on their existing call, advance when the host says so, and read their private clues aloud. This matches the static deployment without sending room activity to a server.
 
-The host’s purchase is verified through the Sociobot billing API. Participants can open a paid case with the host’s code. No product ID or payment provider is embedded in this repository.
+An existing host license is verified through the Sociobot billing API. Participants can open that licensed case with the host’s code. The site offers no new checkout and embeds no payment provider.
 
 ## Deployment
 
@@ -54,7 +54,7 @@ Publish `dist/` as the site root. `staticwebapp.config.json` supplies SPA fallba
 
 Room codes, notebook choices, timers, and accusations stay on the device. License verification sends only the pasted license token to the Sociobot billing API. `/privacy` and `/terms` contain the complete product text.
 
-The interface includes keyboard focus, 44 px touch targets, one heading and main landmark per route, reduced motion, mobile layouts, and explicit timer controls. Tests cover the full game, offline reload, local privacy, mobile overflow, and serious accessibility findings.
+The interface includes stable keyboard focus, 44 px touch targets, one heading and main landmark per route, reduced motion, mobile layouts, and explicit timer controls. Tests cover the full game, offline reload, local privacy, mobile actions, and serious accessibility findings.
 
 ## Project notes
 

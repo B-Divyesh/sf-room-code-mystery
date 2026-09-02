@@ -1,10 +1,10 @@
 [
   {
     "id": "complete-case",
-    "claim": "A case is designed for 20 minutes and has three three-minute evidence rounds.",
+    "claim": "A case has three three-minute evidence rounds and reaches an answer screen.",
     "where": "landing page, game, README",
     "test": "npm test -- --grep @claim:complete-case",
-    "sandbox": "fresh browser context at /demo; advance all rounds, accuse the correct suspect, and assert the answer screen"
+    "sandbox": "fresh browser context at /demo; assert each round starts at 3:00, accuse the correct suspect, and assert the answer screen"
   },
   {
     "id": "room-code",
@@ -25,7 +25,7 @@
     "claim": "Room codes, notebook choices, timers, and accusations stay on the device.",
     "where": "landing privacy section, privacy page, README",
     "test": "npm test -- --grep @claim:local-privacy",
-    "sandbox": "fresh browser context at /demo; record requests through two rounds and assert same-origin only"
+    "sandbox": "fresh browser context at /demo; submit an accusation, assert it is stored locally, and assert the complete flow stays same-origin"
   },
   {
     "id": "offline-reload",
@@ -36,10 +36,10 @@
   },
   {
     "id": "paid-case",
-    "claim": "The $6 one-time license adds a second case with 24 new clues.",
-    "where": "paid section, terms, README",
+    "claim": "Checkout is unavailable; an existing verified license opens the second 24-clue case.",
+    "where": "additional-case section, terms, README",
     "test": "npm test -- --grep @claim:paid-case",
-    "sandbox": "fresh browser context with the license verification response stubbed valid; create and open the paid case"
+    "sandbox": "fresh browser context; assert there is no checkout link, stub an existing license as valid, then create and open the second case"
   },
   {
     "id": "settings-persist",
@@ -61,5 +61,33 @@
     "where": "handoff",
     "test": "npm test -- --grep @claim:render-rate",
     "sandbox": "390 by 844 Chromium viewport at /demo; sample 90 requestAnimationFrame intervals after initial paint"
+  },
+  {
+    "id": "timer-focus",
+    "claim": "Timer updates keep keyboard focus, and Space pauses the round.",
+    "where": "game controls, README",
+    "test": "npm test -- --grep @claim:timer-focus",
+    "sandbox": "fresh browser context at /demo; focus Pause timer, wait for a timed decrement, press Space, and assert focus and time remain stable"
+  },
+  {
+    "id": "focus-contrast",
+    "claim": "The paper focus indicator has at least 3:1 contrast.",
+    "where": "visual thesis, handoff",
+    "test": "npm test -- --grep @claim:focus-contrast",
+    "sandbox": "fresh browser context at /demo; read the focused timer button outline and calculate its contrast against both paper tokens"
+  },
+  {
+    "id": "mobile-actions",
+    "claim": "At 390 pixels wide, game actions are at least 44 pixels and the next-round action is above the fold.",
+    "where": "visual thesis, README",
+    "test": "npm test -- --grep @claim:mobile-actions",
+    "sandbox": "390 by 844 Chromium viewport at /demo; measure every visible action and the next-round button position"
+  },
+  {
+    "id": "not-found-status",
+    "claim": "Unknown routes return HTTP 404 with a designed recovery page.",
+    "where": "site configuration, handoff",
+    "test": "npm test -- --grep @claim:not-found-status",
+    "sandbox": "fresh browser context; request /missing-page, assert HTTP 404, and assert the recovery heading"
   }
 ]

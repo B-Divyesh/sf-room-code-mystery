@@ -1,4 +1,4 @@
-const CACHE = 'room-code-mystery-v1';
+const CACHE = 'room-code-mystery-v2';
 const SHELL = ['/', '/demo', '/index.html', '/favicon.svg', '/manifest.webmanifest', '/art/herbarium-desk.webp', '/art/herbarium-desk-900.webp'];
 
 self.addEventListener('install', (event) => {

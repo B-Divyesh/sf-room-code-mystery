@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.json && vite build",
-    "preview": "vite preview --host 127.0.0.1",
+    "preview": "node scripts/preview.mjs --host 127.0.0.1",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "npm run test:unit && playwright test",
     "test:unit": "vitest run tests/core.test.ts"
   },

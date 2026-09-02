@@ -11,4 +11,5 @@ body {
 }
 main { max-width: 620px; }
 h1 { font: 700 clamp(42px, 8vw, 72px)/1.05 Georgia, serif; }
-a { display: inline-block; padding: 13px 20px; color: #fffaf0; background: #873420; font-weight: 700; }
+a { display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; padding: 13px 20px; color: #fffaf0; background: #873420; font-weight: 700; }
+a:focus-visible { outline: 3px solid #d7b665; outline-offset: 3px; }

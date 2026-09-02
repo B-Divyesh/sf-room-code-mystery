@@ -13,7 +13,6 @@ const REAL_STATE_KEY = 'rcm:game';
 const DEMO_STATE_KEY = 'demo:rcm:game';
 const SETTINGS_KEY = 'rcm:settings';
 const DEMO_CODE = 'C7K2M';
-const checkoutUrl = `https://api.sociobot.in/api/v1/products/${PRODUCT}/checkout`;
 
 let demoMode = location.pathname === '/demo' || new URLSearchParams(location.search).get('demo') === '1';
 let game = readState();
@@ -76,7 +75,7 @@ async function processLicense(): Promise<void> {
     if (!response.ok) throw new Error('License check failed.');
     const result = (await response.json()) as { valid: boolean };
     localStorage.setItem(VERDICT_KEY, JSON.stringify({ valid: result.valid, checkedAt: Date.now() }));
-    licenseNotice = result.valid ? 'The Orchid Ledger is ready to play.' : 'This license is no longer active. Buy a new license to create this case.';
+    licenseNotice = result.valid ? 'The Orchid Ledger is ready to play.' : 'This license is not active. The free case is still available.';
     render();
   } catch {
     licenseNotice = 'The license could not be checked. The free case is still available.';
@@ -132,7 +131,7 @@ function landing(): string {
         <div class="hero-copy paper-panel">
           <p class="eyebrow">A browser game for 4–8 players</p>
           <h1 tabindex="-1">Solve a mystery with your friends</h1>
-          <p class="lede">For 4–8 friends on a video call who want one warm, 20-minute case.</p>
+          <p class="lede">For 4–8 friends on a video call who want three rounds of shared clues.</p>
           <div class="demo-cta">
             <a class="button primary" href="/demo" data-link>Try it with sample data</a>
             <span>Opens round one with six sample players.</span>
@@ -152,7 +151,7 @@ function landing(): string {
               <label for="case-choice">Case</label>
               <select id="case-choice" name="case">
                 <option value="glasshouse-lantern">The Glasshouse Lantern — free</option>
-                <option value="orchid-ledger" ${hasPaidLicense() ? '' : 'disabled'}>The Orchid Ledger — ${hasPaidLicense() ? 'purchased' : '$6 license required'}</option>
+                <option value="orchid-ledger" ${hasPaidLicense() ? '' : 'disabled'}>The Orchid Ledger — ${hasPaidLicense() ? 'licensed' : 'existing license required'}</option>
               </select>
               <label for="player-count">Number of players</label>
               <select id="player-count" name="players">
@@ -192,14 +191,14 @@ function landing(): string {
       </section>
 
       <section class="paid" aria-labelledby="paid-heading">
-        <div><p class="eyebrow">Additional case</p><h2 id="paid-heading">Add The Orchid Ledger</h2><p>Get a second handcrafted case with 24 new clues and a new solution.</p></div>
-        <div class="price-block"><strong>$6</strong><span>one-time purchase</span><a class="button primary" href="${checkoutUrl}">Buy at hosted checkout</a></div>
+        <div><p class="eyebrow">Additional case</p><h2 id="paid-heading">The Orchid Ledger is not for sale</h2><p>New checkout is unavailable. The free Glasshouse Lantern case remains fully playable.</p></div>
+        <div class="price-block availability"><strong>Unavailable</strong><span>No checkout is offered.</span></div>
         <form id="restore-license" class="restore-form">
-          <label for="license-token">Have a license? Paste it here</label>
-          <div><input id="license-token" name="license" type="text" autocomplete="off" required /><button class="button secondary" type="submit">Verify license</button></div>
+          <label for="license-token">Already have an Orchid Ledger license? Paste it here</label>
+          <div><input id="license-token" name="license" type="text" autocomplete="off" required /><button class="button secondary" type="submit">Verify existing license</button></div>
           <p class="license-notice" role="status">${licenseNotice}</p>
         </form>
-        <p class="legal-line">Sociobot is the merchant of record. Purchase terms and refunds are explained in the <a href="/terms" data-link>terms</a>.</p>
+        <p class="legal-line">No payment is taken on this site. Existing license terms are explained in the <a href="/terms" data-link>terms</a>.</p>
       </section>
     </main>`);
 }
@@ -285,11 +284,11 @@ function gameView(): string {
 }
 
 function privacyPage(): string {
-  return shell(`<main id="main" class="simple-page paper-panel"><p class="eyebrow">Privacy</p><h1 tabindex="-1">Your room data stays on your device</h1><p>Room Code Mystery does not require an account. It does not send room codes, notebook choices, timers, or accusations to us.</p><h2>Data stored by your browser</h2><p>Your current room and sound setting use local storage. Demo data uses a separate <code>demo:</code> namespace. Resetting the demo removes that sample state.</p><h2>License checks</h2><p>If you paste or receive a paid license, your browser sends that token to the Sociobot billing API for verification. The result is cached for one day.</p><h2>What we do not collect</h2><p>The game has no advertising, third-party analytics, public rooms, voice recording, or video recording.</p><p>Questions can be sent to <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a>.</p></main>`);
+  return shell(`<main id="main" class="simple-page paper-panel"><p class="eyebrow">Privacy</p><h1 tabindex="-1">Your room data stays on your device</h1><p>Room Code Mystery does not require an account. It does not send room codes, notebook choices, timers, or accusations to us.</p><h2>Data stored by your browser</h2><p>Your current room and sound setting use local storage. Demo data uses a separate <code>demo:</code> namespace. Resetting the demo removes that sample state.</p><h2>License checks</h2><p>If you paste an existing license, your browser sends that token to the Sociobot billing API for verification. The result is cached for one day.</p><h2>What we do not collect</h2><p>The game has no advertising, third-party analytics, public rooms, voice recording, or video recording.</p><p>Questions can be sent to <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a>.</p></main>`);
 }
 
 function termsPage(): string {
-  return shell(`<main id="main" class="simple-page paper-panel"><p class="eyebrow">Terms</p><h1 tabindex="-1">Play fairly and share the clues</h1><p>Room Code Mystery is a browser game for personal group play. You may share a room code with people in your own gathering.</p><h2>Free and paid cases</h2><p>The starter case is free. The Orchid Ledger costs $6 as a one-time purchase for the host. The license lets that host create rooms for the additional case.</p><h2>Purchases and refunds</h2><p>Sociobot and its payment partner are the merchant of record. A refunded or revoked purchase stops verifying. Contact <a href="mailto:support@sociobot.in">support@sociobot.in</a> for purchase help.</p><h2>Fair use</h2><p>Do not republish the case text, sell room access, or use the service to harm others. The game is provided as available without a promise of uninterrupted access.</p><p>These terms were last updated on September 2, 2026.</p></main>`);
+  return shell(`<main id="main" class="simple-page paper-panel"><p class="eyebrow">Terms</p><h1 tabindex="-1">Play fairly and share the clues</h1><p>Room Code Mystery is a browser game for personal group play. You may share a room code with people in your own gathering.</p><h2>Free and licensed cases</h2><p>The starter case is free. The Orchid Ledger is available only to existing license holders. New checkout is unavailable.</p><h2>Existing licenses</h2><p>An active license lets its holder create rooms for The Orchid Ledger. A refunded or revoked license stops verifying. Contact <a href="mailto:support@sociobot.in">support@sociobot.in</a> for license help.</p><h2>Fair use</h2><p>Do not republish the case text, sell room access, or use the service to harm others. The game is provided as available without a promise of uninterrupted access.</p><p>These terms were last updated on September 2, 2026.</p></main>`);
 }
 
 function notFoundPage(): string {
@@ -299,7 +298,7 @@ function notFoundPage(): string {
 function render(focusHeading = false): void {
   const route = routeName();
   const titles = {
-    home: 'Room Code Mystery — Play a 20-minute mystery',
+    home: 'Room Code Mystery — Play a three-round mystery',
     play: 'Your room — Room Code Mystery',
     demo: 'Demo — Room Code Mystery',
     privacy: 'Privacy — Room Code Mystery',
@@ -340,7 +339,7 @@ function bindEvents(): void {
     const players = Number(data.get('players'));
     const mystery = caseById(caseId);
     if (mystery.paid && !hasPaidLicense()) {
-      formError = 'This case needs a verified license. Buy it or paste your license below.';
+      formError = 'This case needs an existing verified license. Paste it below.';
       render();
       return;
     }
@@ -420,7 +419,7 @@ function bindEvents(): void {
     } else if (action === 'pause' && game) {
       game = { ...game, paused: !game.paused };
       saveState();
-      render();
+      updateTimerDom();
     } else if (action === 'sound') {
       settings.sound = !settings.sound;
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
@@ -461,6 +460,21 @@ function playChime(): void {
   }
 }
 
+function updateTimerDom(): void {
+  if (!game || game.phase !== 'clue') return;
+  const timer = document.querySelector<HTMLElement>('.timer');
+  const status = timer?.querySelector<HTMLElement>('span');
+  const value = timer?.querySelector<HTMLElement>('strong');
+  const pause = document.querySelector<HTMLButtonElement>('[data-action="pause"]');
+  if (!timer || !status || !value || !pause) return;
+  const formatted = formatTime(game.secondsLeft);
+  timer.classList.toggle('timer-ended', game.secondsLeft === 0);
+  timer.setAttribute('aria-label', `${formatted} remaining`);
+  status.textContent = game.paused ? 'Paused' : game.secondsLeft === 0 ? 'Time is up' : 'Discuss';
+  value.textContent = formatted;
+  pause.textContent = game.paused ? 'Resume timer' : 'Pause timer';
+}
+
 function timerLoop(now: number): void {
   const elapsed = Math.min(now - lastFrame, 250);
   lastFrame = now;
@@ -472,7 +486,7 @@ function timerLoop(now: number): void {
       game = { ...game, secondsLeft: Math.max(0, game.secondsLeft - ticks) };
       if (game.secondsLeft === 0) game.paused = true;
       saveState();
-      render();
+      updateTimerDom();
     }
   }
   timerFrame = requestAnimationFrame(timerLoop);

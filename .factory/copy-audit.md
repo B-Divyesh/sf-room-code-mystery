@@ -7,7 +7,7 @@ Audited on 2026-09-02. Counts treat hyphenated ranges and contractions as one wo
 | Sentence | Words | Result |
 | --- | ---: | --- |
 | Solve a mystery with your friends | 7 | Pass; headline under 9 words |
-| For 4–8 friends on a video call who want one warm, 20-minute case. | 13 | Pass |
+| For 4–8 friends on a video call who want three rounds of shared clues. | 14 | Pass |
 | Opens round one with six sample players. | 7 | Pass |
 | One friend creates the code. | 5 | Pass |
 | Everyone else joins with it. | 5 | Pass |
@@ -25,16 +25,18 @@ Primary action: “Try it with sample data.” Real actions: “Create room code
 | Compare one private clue per player across three timed rounds. | 10 | Pass |
 | The host records the group’s accusation and opens the answer. | 10 | Pass |
 
-## Privacy and pricing
+## Privacy and additional case
 
 | Sentence | Words | Result |
 | --- | ---: | --- |
 | No account or public matchmaking. | 5 | Pass |
 | No voice, video, or accusations are uploaded. | 7 | Pass |
 | No computer decides whether your reasoning is good. | 8 | Pass |
-| Get a second handcrafted case with 24 new clues and a new solution. | 13 | Pass |
-| Sociobot is the merchant of record. | 6 | Pass |
-| Purchase terms and refunds are explained in the terms. | 9 | Pass |
+| New checkout is unavailable. | 4 | Pass |
+| The free Glasshouse Lantern case remains fully playable. | 8 | Pass |
+| No checkout is offered. | 4 | Pass |
+| No payment is taken on this site. | 7 | Pass |
+| Existing license terms are explained in the terms. | 8 | Pass |
 
 ## Demo banner
 
@@ -52,8 +54,8 @@ Primary action: “Try it with sample data.” Real actions: “Create room code
 | Timed story stage | round |
 | Final group choice | accusation |
 | Answer screen | reveal |
-| Purchased content | case |
-| Purchase credential | license |
+| Additional content | case |
+| Existing access credential | license |
 
 ## Catalog description
 
