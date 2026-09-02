@@ -7,7 +7,7 @@ import Database from 'better-sqlite3';
 import { WebSocketServer } from 'ws';
 
 const PORT = Number(process.env.PORT || 8787);
-const DB_PATH = process.env.DATABASE_PATH || '/data/rooms.sqlite';
+const DB_PATH = process.env.DATABASE_PATH || '/data/rooms-v2.sqlite';
 const ROOM_TTL_MS = 6 * 60 * 60 * 1000;
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const allowedOrigins = new Set([
@@ -18,7 +18,8 @@ const allowedOrigins = new Set([
 
 mkdirSync(dirname(DB_PATH), { recursive: true });
 const db = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
+db.pragma('journal_mode = DELETE');
+db.pragma('busy_timeout = 5000');
 db.exec(`CREATE TABLE IF NOT EXISTS rooms (
   code TEXT PRIMARY KEY,
   case_id TEXT NOT NULL,

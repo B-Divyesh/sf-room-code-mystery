@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "realtime": "DATABASE_PATH=.data/rooms.sqlite node server/index.mjs",
+    "realtime": "DATABASE_PATH=.data/rooms-v2.sqlite node server/index.mjs",
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "node scripts/preview.mjs --host 127.0.0.1",
     "typecheck": "tsc -p tsconfig.json --noEmit",
