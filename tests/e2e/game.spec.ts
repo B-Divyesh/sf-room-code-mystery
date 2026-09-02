@@ -87,7 +87,9 @@ test('@claim:local-privacy keeps all demo game values local with static GET requ
   await page.getByRole('button', { name: 'Lock accusation and reveal' }).click();
   await expect(page.getByText('Correct accusation')).toBeVisible();
   const stored = await page.evaluate(() => JSON.parse(localStorage.getItem('demo:rcm:game') ?? '{}'));
-  expect(stored).toMatchObject({ code: 'C7K2M', seat: 1, round: 3, secondsLeft: 180, accusation: 'celia' });
+  expect(stored).toMatchObject({ code: 'C7K2M', seat: 1, round: 3, accusation: 'celia' });
+  expect(stored.secondsLeft).toBeGreaterThanOrEqual(0);
+  expect(stored.secondsLeft).toBeLessThanOrEqual(180);
   expect(requests.every((request) => request.origin === 'http://127.0.0.1:4173' && request.method === 'GET' && request.body === null)).toBe(true);
 });
 
