@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { serve, upgradeWebSocket } from '@hono/node-server';
 import { Hono } from 'hono';
@@ -7,7 +7,7 @@ import Database from 'better-sqlite3';
 import { WebSocketServer } from 'ws';
 
 const PORT = Number(process.env.PORT || 8787);
-const DB_PATH = process.env.DATABASE_PATH || '/data/rooms-v3.sqlite';
+const DB_PATH = process.env.DATABASE_PATH || '/data/rooms-v4.sqlite';
 const ROOM_TTL_MS = 6 * 60 * 60 * 1000;
 const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const allowedOrigins = new Set([
@@ -17,9 +17,9 @@ const allowedOrigins = new Set([
 ]);
 
 mkdirSync(dirname(DB_PATH), { recursive: true });
-const db = new Database(DB_PATH);
-db.pragma('busy_timeout = 30000');
-let databaseReady = false;
+const db = existsSync(DB_PATH) ? new Database(readFileSync(DB_PATH)) : new Database(':memory:');
+db.pragma('journal_mode = MEMORY');
+let databaseReady = true;
 const schema = `CREATE TABLE IF NOT EXISTS rooms (
   code TEXT PRIMARY KEY,
   case_id TEXT NOT NULL,
@@ -33,16 +33,13 @@ const schema = `CREATE TABLE IF NOT EXISTS rooms (
   expires_at INTEGER NOT NULL
 )`;
 
-function initializeDatabase() {
-  try {
-    db.exec(schema);
-    databaseReady = true;
-    console.log(`SQLite ready at ${DB_PATH}`);
-  } catch (error) {
-    console.error('SQLite is waiting for its durable file lock.', error.code || error);
-    setTimeout(initializeDatabase, 5_000);
-  }
+function persistDatabase() {
+  const temporary = `${DB_PATH}.tmp`;
+  writeFileSync(temporary, db.serialize());
+  renameSync(temporary, DB_PATH);
 }
+db.exec(schema);
+persistDatabase();
 
 const app = new Hono();
 const sockets = new Map();
@@ -68,7 +65,8 @@ function publicRoom(row) {
 }
 
 function getRoom(code) {
-  db.prepare('DELETE FROM rooms WHERE expires_at <= ?').run(Date.now());
+  const expired = db.prepare('DELETE FROM rooms WHERE expires_at <= ?').run(Date.now());
+  if (expired.changes) persistDatabase();
   return db.prepare(`SELECT ${roomFields}, host_token_hash FROM rooms WHERE code = ?`).get(code);
 }
 
@@ -135,6 +133,7 @@ app.post('/rooms', async (c) => {
     (code, case_id, players, host_token_hash, round, phase, seconds_left, paused, updated_at, expires_at)
     VALUES (?, ?, ?, ?, 0, 'lobby', 180, 1, ?, ?)`)
     .run(code, body.caseId, body.players, hash(hostToken), now, now + ROOM_TTL_MS);
+  persistDatabase();
   const room = getRoom(code);
   return c.json({ room: publicRoom(room), hostToken }, 201);
 });
@@ -169,6 +168,7 @@ app.patch('/rooms/:code', async (c) => {
   const now = Date.now();
   db.prepare(`UPDATE rooms SET round = ?, phase = ?, seconds_left = ?, paused = ?, updated_at = ?, expires_at = ? WHERE code = ?`)
     .run(body.round, body.phase, body.secondsLeft, body.paused ? 1 : 0, now, now + ROOM_TTL_MS, code);
+  persistDatabase();
   const updated = getRoom(code);
   broadcast(code, updated);
   return c.json({ room: publicRoom(updated) });
@@ -202,7 +202,6 @@ app.onError((error, c) => {
 });
 
 const wss = new WebSocketServer({ noServer: true, maxPayload: 2_048 });
-initializeDatabase();
 serve({ fetch: app.fetch, port: PORT, hostname: '0.0.0.0', websocket: { server: wss } }, (info) => {
   console.log(`Room service listening on ${info.port}; database ${DB_PATH}`);
 });
