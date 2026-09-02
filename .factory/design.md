@@ -33,7 +33,9 @@ The product has one explicit treatment: a dark green desk holding light paper. T
 
 Panels use clipped paper corners, thin ink rules, and a small pin or specimen number. Buttons resemble painted index tabs: square corners with one clipped edge. Dashed borders mean an item has not been chosen; solid red borders mark the current choice. Links stay underlined.
 
-Every action changes a visible noun: create a room, join a room, start a round, reveal the answer. Keyboard focus uses a 3 px brass outline on green and a 3 px sealing-wax outline on paper. Both have a 3 px offset and at least 3:1 contrast. Touch and keyboard use the same controls. The room state persists locally and can be resumed after refresh.
+Every action changes a visible noun: create a room, join a room, start a round, reveal the answer. Keyboard focus uses a 3 px brass outline on green and a 3 px sealing-wax outline on paper. Both have a 3 px offset and at least 3:1 contrast. Touch and keyboard use the same controls. Private notebook state persists locally; shared room phase and timer state synchronize through the product room service.
+
+Connection status uses a small field-station lamp: solid green means connected and an outlined circle means reconnecting. It is always paired with text, so color never carries the state alone.
 
 ## Motion
 
@@ -41,7 +43,7 @@ The signature motion is a single 220 ms “paper settle”: new clue sheets rise
 
 ## Game rhythm and difficulty
 
-The starter case runs in three rounds. Round one establishes people and place; round two introduces contradictions; round three supplies the decisive physical trace. Each round defaults to three minutes, but the host can pause or advance, so timing never blocks accessibility. Four to eight players receive different clues in every round. The accusation offers four suspects, one correct answer, and a compact explanation. A second deterministic starter arrangement gives the gathering a reason to replay without changing the authored solution.
+The starter case runs in three rounds. Round one establishes people and place; round two introduces contradictions; round three supplies the decisive physical trace. Each round defaults to three minutes, but the host can pause or advance, so timing never blocks accessibility. Four to eight players receive different clues in every round. The accusation offers four suspects, one correct answer, and a compact explanation. A second authored case gives the gathering a reason to replay. Both cases are free until product-scoped checkout exists.
 
 ## Asset plan and provenance
 

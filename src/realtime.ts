@@ -12,7 +12,9 @@ export type SharedRoom = {
 
 type RoomResponse = { room: SharedRoom; hostToken?: string; error?: string };
 
-export const REALTIME_ORIGIN = import.meta.env.VITE_REALTIME_URL || 'http://127.0.0.1:8787';
+export const REALTIME_ORIGIN = import.meta.env.VITE_REALTIME_URL || (import.meta.env.PROD
+  ? 'https://room-code-mystery-realtime.sociobot.in'
+  : 'http://127.0.0.1:8787');
 
 async function roomRequest(path: string, init?: RequestInit): Promise<RoomResponse> {
   const response = await fetch(`${REALTIME_ORIGIN}${path}`, {

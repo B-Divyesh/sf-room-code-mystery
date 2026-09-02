@@ -120,10 +120,10 @@
   },
   {
     "id": "no-account-media",
-    "claim": "Playing needs no account, captures no voice or video, and uses no automated judgment.",
+    "claim": "Playing needs no account, captures no voice or video, sends no accusation, and uses no automated judgment.",
     "where": "landing privacy section, privacy page, README",
     "test": "npm test -- --grep @claim:no-account-media",
-    "sandbox": "fresh browser context completes a real room while checking for account controls, media capture calls, AI, auth, and analytics requests"
+    "sandbox": "fresh browser context completes a real room while checking account controls, media capture calls, request destinations, and request bodies"
   },
   {
     "id": "room-expiry",

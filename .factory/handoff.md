@@ -1,36 +1,45 @@
-# Review 1 handoff
+# Polish round 1 handoff
 
 ## Outcome
 
-Adversarial first-read review 1 is complete. Verdict: **FAIL**.
+All F-1-1 through F-1-19 are resolved. Room Code Mystery remains a static Vite browser game with a product-owned realtime companion. Real rooms now synchronize host-controlled rounds, timer state, and the reveal across browsers. The service keeps ephemeral room state as a SQLite database image under `/data`; private notebook choices and accusations stay in each browser.
 
-The full report is in [`review-1.md`](review-1.md). It records 19 findings: two
-blocking, seven high, four medium, and six minor. The blockers are the lack of
-cross-browser room synchronization and the still-unmet brief requirement for a
-paid additional handcrafted case.
+The unprovisioned paid-case promise is disabled in the source brief and public copy. Both authored cases are free until a product-scoped Sociobot checkout exists.
 
-No product code, infrastructure, DNS, billing, or external state was changed.
+## Deployment
 
-## Verification performed
+- Static app: `sf-room-code-mystery` at <https://room-code-mystery.sociobot.in/>
+- Realtime app: `sf-room-code-mystery-realtime` at <https://room-code-mystery-realtime.sociobot.in/>
+- Durable data: `/data/rooms-v4.sqlite` on the fleet-created `sf-room-code-mystery-rea-c03e36` share
+- Realtime health: <https://room-code-mystery-realtime.sociobot.in/health>
+- Main artifact remains `browser-game`; Vite outputs `dist/`.
 
-- Cold live loads at 390 × 844 and 1440 × 900 in fresh contexts.
-- One-click demo, reset, real/demo namespace isolation, **Start for real**, and
-  live offline reload.
-- Every exact command in `.factory/claims.json`; all 15 passed.
-- `npm test`: 5 unit and 18 Playwright tests passed.
-- `npm run build`: passed and produced `dist/`.
-- Live two-browser room-code exercise, deep link, browser Back/focus, metadata
-  inventory, full link crawl, and missing-route status.
-- Live request logging: only same-origin requests observed in the demo flow.
-- Live Axe scans on `/`, `/demo`, `/setup`, `/privacy`, `/terms`, and a missing
-  route at desktop and mobile: zero serious/critical violations.
-- `/opt/fleet/lib/verify-url.sh` on the live root: passed with zero console
-  errors.
-- Earlier handoff and verification findings rechecked against live behavior and
-  code.
+## Verification
 
-## Known gaps and next steps
+Run locally:
 
-Follow F-1-1 through F-1-19 in order. After repair, repeat the complete review
-from a fresh context rather than checking only the diff. The review worktree is
-otherwise buildable; dependency audit reported zero vulnerabilities.
+```sh
+npm ci
+npm test
+npm run build
+npm audit --audit-level=high
+```
+
+Verified on 2026-09-02:
+
+- 5 Vitest unit tests passed.
+- 22 Playwright browser tests passed, including all 19 claim tests.
+- A two-context room completed from creation through three synchronized rounds and shared reveal.
+- The demo reset preserved the exact real `rcm:game` value and `/?demo=1` opened isolated sample data.
+- Offline demo reload passed in its own browser context.
+- Production build: JavaScript 36.82 KB raw / 12.91 KB gzip; CSS 17.13 KB raw / 4.75 KB gzip.
+- Live Lighthouse: performance 100, accessibility 100, best practices 100, SEO 100; LCP 1.7 s and CLS 0.
+- Live Axe: zero serious or critical violations on `/`, `/demo`, `/setup`, `/privacy`, `/terms`, and the 404 at 1440×900 and 390×844.
+- Fleet URL verification passed with no console errors, one h1, one main landmark, language, title, image alt text, and labelled buttons.
+- Dependency audit found zero vulnerabilities.
+
+Evidence is in `.factory/qa-evidence/polish-1-*`. The full finding map is in `.factory/polish-1.md`.
+
+## Known gaps
+
+None for this work order. Paid cases are intentionally unavailable and make no purchase promise. Adding them later requires a registered Sociobot billing product and a tested license return flow.

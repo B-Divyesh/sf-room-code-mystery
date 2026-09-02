@@ -38,7 +38,7 @@ npm run build
 
 Tests cover the deterministic core, complete game, two-browser synchronization, demo isolation, offline reload, metadata, mobile actions, and accessibility. Every product claim has one tagged browser test in [`.factory/claims.json`](.factory/claims.json).
 
-The production build writes the static site to `dist/`. Initial JavaScript remains below the 200 KB budget.
+The production build writes the static site to `dist/`.
 
 ## How room codes work
 
@@ -55,7 +55,7 @@ The main game remains a static Vite site. Its product-owned realtime companion r
 Build the site with:
 
 ```sh
-VITE_REALTIME_URL=https://<product-room-service> npm run build
+VITE_REALTIME_URL=https://room-code-mystery-realtime.sociobot.in npm run build
 ```
 
 Publish `dist/` as the static site root. The config keeps deep links working, adds browser security rules, and serves each file with the correct type.

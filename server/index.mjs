@@ -70,6 +70,11 @@ function getRoom(code) {
   return db.prepare(`SELECT ${roomFields}, host_token_hash FROM rooms WHERE code = ?`).get(code);
 }
 
+setInterval(() => {
+  const expired = db.prepare('DELETE FROM rooms WHERE expires_at <= ?').run(Date.now());
+  if (expired.changes) persistDatabase();
+}, 60_000).unref();
+
 function makeCode() {
   for (let attempt = 0; attempt < 20; attempt += 1) {
     const bytes = randomBytes(5);

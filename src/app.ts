@@ -187,7 +187,7 @@ function shell(content: string): string {
     <footer>
       <div><strong>Room Code Mystery</strong><p>Three evidence rounds for 4–8 friends.</p></div>
       <div class="footer-links"><a href="/privacy" data-link>Privacy</a><a href="/terms" data-link>Terms</a><a href="https://hello-factory.sociobot.in/" rel="noreferrer">Built by Param Factory ↗</a></div>
-      <p class="build-note">v1.0 · Original generated field-guide art</p>
+      <p class="build-note">v1.1 · Original generated field-guide art</p>
     </footer>
     <div class="route-announcer sr-only" aria-live="polite"></div>`;
 }
@@ -258,7 +258,7 @@ function setupPage(): string {
         <div><p class="eyebrow">Private by design</p><h2 id="privacy-heading">Your room stays with your group</h2></div>
         <ul>
           <li>No account or public matchmaking.</li>
-          <li>Room timing is deleted from the server within six hours.</li>
+          <li>Room timing expires six hours after the last host action.</li>
           <li>Private clues and accusations never leave your device.</li>
         </ul>
       </section>
@@ -350,7 +350,7 @@ function gameView(rootSample = false): string {
       <div class="root-actions"><a class="button primary" href="/demo" data-link>Try it with sample data</a><span>Round one opens with one click.</span><a class="text-button" href="/setup" data-link>Start a synchronized room</a></div>
       <ul class="root-facts" aria-label="Game facts"><li><strong>Price:</strong> two free cases</li><li><strong>Privacy:</strong> private clues stay local</li><li><strong>Offline:</strong> demo reloads after one visit</li></ul>
     </section>` : '';
-  const homeSections = rootSample ? `<section class="root-how" aria-labelledby="root-how-title"><h2 id="root-how-title">How the game works</h2><ol><li><strong>Share the room code.</strong> Each friend chooses a private notebook.</li><li><strong>Compare three clues.</strong> The host opens each round for everyone.</li><li><strong>Make one accusation.</strong> The answer appears on every joined screen.</li></ol></section><section class="root-limits" aria-labelledby="root-limits-title"><h2 id="root-limits-title">What the game stores</h2><p>The demo stays on your device. Real rooms send only the case, timer, and round to our room server.</p><p>Private clues and accusations stay in your browser. Server room state is deleted within six hours.</p></section><section class="root-cases" aria-labelledby="root-cases-title"><h2 id="root-cases-title">Two cases are free</h2><p>The Glasshouse Lantern and The Orchid Ledger need no checkout or license.</p><a class="button secondary" href="/setup" data-link>Start a synchronized room</a></section>` : '';
+  const homeSections = rootSample ? `<section class="root-how" aria-labelledby="root-how-title"><h2 id="root-how-title">How the game works</h2><ol><li><strong>Share the room code.</strong> Each friend chooses a private notebook.</li><li><strong>Compare three clues.</strong> The host opens each round for everyone.</li><li><strong>Make one accusation.</strong> The answer appears on every joined screen.</li></ol></section><section class="root-limits" aria-labelledby="root-limits-title"><h2 id="root-limits-title">What the game stores</h2><p>The demo stays on your device. Real rooms send only the case, timer, and round to our room server.</p><p>Private clues and accusations stay in your browser. Server room state expires after six hours.</p></section><section class="root-cases" aria-labelledby="root-cases-title"><h2 id="root-cases-title">Two cases are free</h2><p>The Glasshouse Lantern and The Orchid Ledger need no checkout or license.</p><a class="button secondary" href="/setup" data-link>Start a synchronized room</a></section>` : '';
   return shell(`<main id="main" class="game-main ${rootSample ? 'root-game' : ''}">
     <div class="game-backdrop" aria-hidden="true"></div>
     ${introduction}
@@ -361,7 +361,7 @@ function gameView(rootSample = false): string {
 }
 
 function privacyPage(): string {
-  return shell(`<main id="main" class="simple-page paper-panel"><p class="eyebrow">Privacy</p><h1 tabindex="-1">See what a room stores</h1><p>Room Code Mystery does not require an account. Real rooms send their code, case, player count, round, and timer to our product server.</p><h2>Data stored by your browser</h2><p>Your notebook number, private clues, accusation, and sound setting stay in browser storage. Demo data uses a separate <code>demo:</code> namespace and never contacts the room server.</p><h2>Short-lived room data</h2><p>Shared room state uses product-owned SQLite storage. It is deleted within six hours of the last host action. Accusations are never sent or stored there.</p><h2>What we do not collect</h2><p>The game has no accounts, advertising, analytics, public matchmaking, voice recording, video recording, or automated judging.</p><p>Questions can be sent to <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a>.</p></main>`);
+  return shell(`<main id="main" class="simple-page paper-panel"><p class="eyebrow">Privacy</p><h1 tabindex="-1">See what a room stores</h1><p>Room Code Mystery does not require an account. Real rooms send their code, case, player count, round, and timer to our product server.</p><h2>Data stored by your browser</h2><p>Your notebook number, private clues, accusation, and sound setting stay in browser storage. Demo data uses a separate <code>demo:</code> namespace and never contacts the room server.</p><h2>Short-lived room data</h2><p>Shared room state uses product-owned SQLite storage. It expires six hours after the last host action. Accusations are never sent or stored there.</p><h2>What we do not collect</h2><p>The game has no accounts, advertising, analytics, public matchmaking, voice recording, video recording, or automated judging.</p><p>Questions can be sent to <a href="mailto:privacy@sociobot.in">privacy@sociobot.in</a>.</p></main>`);
 }
 
 function termsPage(): string {

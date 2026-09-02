@@ -59,6 +59,7 @@ test('@claim:room-code synchronizes different private notebooks through a comple
 test('@claim:demo-sandbox resets sample state without changing real state', async ({ page }) => {
   await page.goto('/setup');
   await page.getByRole('button', { name: 'Create room code' }).click();
+  await expect(page).toHaveURL(/\/play$/);
   const realState = await page.evaluate(() => localStorage.getItem('rcm:game'));
   expect(realState).toBeTruthy();
   await page.goto('/demo');
@@ -70,6 +71,9 @@ test('@claim:demo-sandbox resets sample state without changing real state', asyn
   await page.getByRole('button', { name: 'Start for real' }).click();
   expect(await page.evaluate(() => localStorage.getItem('rcm:game'))).toBe(realState);
   expect(await page.evaluate(() => localStorage.getItem('demo:rcm:game'))).toBeNull();
+  await page.goto('/?demo=1');
+  await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible();
+  await expect(page.getByText('Round 1 of 3')).toBeVisible();
 });
 
 test('@claim:local-privacy keeps all demo game values local with static GET requests only', async ({ page }) => {
@@ -218,6 +222,7 @@ test('@claim:render-rate keeps the game screen above 55 fps in the mobile browse
 test('@claim:cold-root-game shows and plays an active sample round before room setup', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: 'Solve a mystery with your friends' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Try it with sample data' })).toHaveAttribute('href', '/demo');
   await expect(page.getByText('Round 1 of 3')).toBeVisible();
   await expect(page.getByLabel(/3:00 remaining/)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Open round 2' })).toBeVisible();
@@ -295,8 +300,8 @@ test('@claim:no-account-media requires no account, capture, or automated judgmen
       };
     }
   });
-  const requests: string[] = [];
-  page.on('request', (request) => requests.push(request.url()));
+  const requests: { url: string; body: string | null }[] = [];
+  page.on('request', (request) => requests.push({ url: request.url(), body: request.postData() }));
   await page.goto('/setup');
   await expect(page.locator('input[type="email"], input[type="password"], [href*="login"], [href*="signup"]')).toHaveCount(0);
   await page.getByRole('button', { name: 'Create room code' }).click();
@@ -307,7 +312,8 @@ test('@claim:no-account-media requires no account, capture, or automated judgmen
   await page.getByLabel(/Celia Finch/).check();
   await page.getByRole('button', { name: 'Lock accusation and reveal' }).click();
   expect(mediaCalls).toEqual([]);
-  expect(requests.some((url) => /openai|login|signup|analytics/i.test(url))).toBe(false);
+  expect(requests.some(({ url }) => /openai|login|signup|analytics/i.test(url))).toBe(false);
+  expect(requests.some(({ body }) => /celia|accusation/i.test(body || ''))).toBe(false);
 });
 
 test('@claim:room-expiry assigns each synchronized room a six-hour expiry', async ({ page }) => {
@@ -320,6 +326,7 @@ test('@claim:room-expiry assigns each synchronized room a six-hour expiry', asyn
     });
     return response.json();
   });
+  expect(expiry.room.code).toMatch(/^[A-HJ-NP-Z2-9]{5}$/);
   expect(expiry.room.expiresAt - expiry.room.updatedAt).toBe(6 * 60 * 60 * 1000);
 });
 

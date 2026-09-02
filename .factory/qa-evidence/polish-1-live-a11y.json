@@ -1,0 +1,158 @@
+[
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "path": "/",
+    "status": 200,
+    "title": "Room Code Mystery — Play a three-round mystery",
+    "h1": 1,
+    "main": 1,
+    "serious": [],
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "path": "/demo",
+    "status": 200,
+    "title": "Demo — Room Code Mystery",
+    "h1": 1,
+    "main": 1,
+    "serious": [],
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "path": "/setup",
+    "status": 200,
+    "title": "Start a room — Room Code Mystery",
+    "h1": 1,
+    "main": 1,
+    "serious": [],
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "path": "/privacy",
+    "status": 200,
+    "title": "Privacy — Room Code Mystery",
+    "h1": 1,
+    "main": 1,
+    "serious": [],
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "path": "/terms",
+    "status": 200,
+    "title": "Terms — Room Code Mystery",
+    "h1": 1,
+    "main": 1,
+    "serious": [],
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "path": "/missing-page",
+    "status": 404,
+    "title": "Page not found — Room Code Mystery",
+    "h1": 1,
+    "main": 1,
+    "serious": [],
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "/",
+    "status": 200,
+    "title": "Room Code Mystery — Play a three-round mystery",
+    "h1": 1,
+    "main": 1,
+    "serious": [],
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "/demo",
+    "status": 200,
+    "title": "Demo — Room Code Mystery",
+    "h1": 1,
+    "main": 1,
+    "serious": [],
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "/setup",
+    "status": 200,
+    "title": "Start a room — Room Code Mystery",
+    "h1": 1,
+    "main": 1,
+    "serious": [],
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "/privacy",
+    "status": 200,
+    "title": "Privacy — Room Code Mystery",
+    "h1": 1,
+    "main": 1,
+    "serious": [],
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "/terms",
+    "status": 200,
+    "title": "Terms — Room Code Mystery",
+    "h1": 1,
+    "main": 1,
+    "serious": [],
+    "consoleErrors": []
+  },
+  {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "/missing-page",
+    "status": 404,
+    "title": "Page not found — Room Code Mystery",
+    "h1": 1,
+    "main": 1,
+    "serious": [],
+    "consoleErrors": []
+  }
+]
