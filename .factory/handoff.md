@@ -1,4 +1,23 @@
-# Room Code Mystery repair handoff
+# Room Code Mystery handoff — PASS
+
+## Independent verification 3 (2026-09-02)
+
+**PASS** for deployed candidate `037a9efca48b84dc032bb096e234c5788ac04d5f`
+at <https://room-code-mystery.sociobot.in/>. Independent clean-install tests,
+all 15 declared claims, the 18-test full suite, typecheck, production build,
+live end-to-end game runs (correct and incorrect accusation), offline reload,
+privacy/network inspection, headers, keyboard/mobile/reduced-motion checks,
+and live axe scans all passed. The local production HTML, JS, and CSS match
+the deployed responses byte-for-byte. No defects were found. Full exact
+evidence is in [verification-3.md](verification-3.md); live capture and
+basic-page-check evidence is in `qa-evidence/verification-3-live/`.
+
+How to reproduce: `npm ci && npm run typecheck && npm test && npm run build`,
+then open `/demo`; the live site is a matching build. Initial JS is 10,848 B
+gzip and CSS is 4,459 B gzip; live mobile FPS measured 60.00 (claim minimum:
+55). There are no server endpoints, sign-in, billing, or request allowances.
+
+## Earlier repair handoff
 
 ## Release repair
 
